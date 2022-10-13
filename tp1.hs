@@ -181,8 +181,8 @@ type Var = String
 
 data Lexp = Lnum Int            -- Constante entière.
           | Lref Var            -- Référence à une variable.
-          | Llambda Var Lexp    -- Fonction anonyme prenant un argument.
-          | Lcall Lexp Lexp     -- Appel de fonction, avec un argument.
+          | Llambda Var Lexp    -- Fonction anonyme prenant un argument. fn
+          | Lcall Lexp Lexp     -- Appel de fonction, avec un argument. (e1;;;)
           | Lnil                -- Constructeur de liste vide.
           | Ladd Lexp Lexp      -- Constructeur de liste.
           | Lmatch Lexp Var Var Lexp Lexp -- Expression conditionelle.
@@ -195,21 +195,40 @@ data Lexp = Lnum Int            -- Constante entière.
 s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym "nil") = Lnil
+s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons exp1 exp2) =
     let var1 = s2l exp1
         var2 = s2l exp2
     in
-        case (var1, var2)of
-            (Lref s, _) -> Llambda s var2
-            (_, Lref s) -> Llambda s var1
+        case (var1,var2)of
+
+            (Lref "+", _) -> Llambda "+" (s2l exp2)
+            (Lref  "list", _) -> Ladd (s2l exp1) (s2l exp2)
+            (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
+            (Lref  "add", _) -> Ladd (s2l exp1) (s2l exp2)
+            (_, Lref  "add") -> Ladd (s2l exp1) (s2l exp2)
+            
+            
+            
+            
+            (_, Lref  n) -> Llambda n (s2l exp1)
+            (Lref  n, _) -> Llambda n (s2l exp2)
+            
+
+
+            
+            (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
+
+            (Lnum n, Lnil)-> Lcall var1 var2
             (_,_) -> Lcall var1 var2
-            (_,_ ) -> Ladd var1 var2
+            
+--                                         Llambda         Llambda
+--Scons (Scons (Ssym "fn") (Scons (Scons (Ssym "x") Snil) (Scons (Ssym "x") Snil))) (Scons (Snum 2) Snil)
 
+s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
-
-s2l se = error ("Malformed Sexp: " ++ (showSexp se))
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
@@ -282,9 +301,9 @@ l2d env(Lcall lexp1 lexp2) =
     case (lexp1, lexp2)of
         (Lref s, Lref x) -> Dcall(Dref((indexOf s (s:env))+1)) (l2d env lexp2)
         (lexp1, lexp2) -> Dcall(l2d env lexp1) (l2d env lexp2)
-    
 
-  
+
+
 
 indexOf :: Var -> [Var] -> Idx
 indexOf _ [] = error "empty List"
@@ -307,10 +326,10 @@ eval env (Dref s) = Vfun (\val -> env!!s)
 eval env (Dcall dexp1 dexp2) =
     let
         (Vfun f) = eval env dexp1
-        evalDexp2 = eval env dexp2
     in
-        f evalDexp2
+        Vfun (\val -> f(eval env dexp2))
         -- Vfun f -> f (eval env dexp2)
+        --Vfun (\val -> eval env dexp1)
 
 -- ¡¡ COMPLETER !!
 
@@ -345,7 +364,7 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 
-main = print (eval [](Dcall(Dnum 2) (Dnum 3)))
+main = print(sexpOf "((fn (x) x) 2)")
+
 -- l2d env(Lcall lexp1 lexp2) = Dcall (l2d env lexp1) (l2d env lexp2)
 -- l2d env(Llambda var lexp) = Dlambda (l2d (var:env) lexp)
-
