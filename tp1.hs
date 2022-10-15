@@ -1,5 +1,5 @@
--- -- TP-2  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
--- {-# OPTIONS_GHC -Wall #-}
+ --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
+{-# OPTIONS_GHC -Wall #-}
 
 -- Ce fichier défini les fonctionalités suivantes:
 -- - Analyseur lexical
@@ -198,36 +198,36 @@ s2l (Ssym "nil") = Lnil
 s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
-s2l (Scons exp1 exp2) =
-    let var1 = s2l exp1
-        var2 = s2l exp2
-    in
-        case (var1,var2)of
-
-            (Lref "+", _) -> Llambda "+" (s2l exp2)
-            (Lref  "list", _) -> Ladd (s2l exp1) (s2l exp2)
-            (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
-            (Lref  "add", _) -> Ladd (s2l exp1) (s2l exp2)
-            (_, Lref  "add") -> Ladd (s2l exp1) (s2l exp2)
-            
-            
-            
-            
-            (_, Lref  n) -> Llambda n (s2l exp1)
-            (Lref  n, _) -> Llambda n (s2l exp2)
-            
+s2l (Scons sexp1 sexp2) =
+        case (sexp1,sexp2)of
+            (Snum n, Snil) -> Lnum n
+            (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
+            (Ssym "+", Snum n) -> Lcall (Lref "+")(s2l sexp2)
+            (Ssym "*", Snum n) -> Lcall (Lref "-")(s2l sexp2)
+            (Ssym "/", Snum n) -> Lcall (Lref "*")(s2l(sexp2))
+            (Ssym "-", Snum n) -> Lcall (Lref "-")(s2l sexp2)
+            (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
+            (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
+            (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+            -- (_, (Lcall (Lnum x)(Lnum y))) -> Lcall (s2l(Scons exp1 (Snum x)))(Lnum y)
+            -- (Lref "list", _) -> Ladd (s2l exp1) (s2l exp2)
+            -- (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
+            -- (Lref  "add", _) -> Ladd (s2l exp1) (s2l exp2)
+            -- (_, Lref  "add") -> Ladd (s2l exp1) (s2l exp2)
 
 
-            
-            (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
+            -- (_, Lref  n) -> Llambda n (s2l exp1)
+            -- (Lref  n, _) -> Llambda n (s2l exp2)
+            -- (_,_) -> Lcall var1 var2
 
-            (Lnum n, Lnil)-> Lcall var1 var2
-            (_,_) -> Lcall var1 var2
-            
+s2l se = error ("Malformed Sexp: " ++ showSexp se)
+
+
+
 --                                         Llambda         Llambda
 --Scons (Scons (Ssym "fn") (Scons (Scons (Ssym "x") Snil) (Scons (Ssym "x") Snil))) (Scons (Snum 2) Snil)
 
-s2l se = error ("Malformed Sexp: " ++ showSexp se)
+
 
 
 ---------------------------------------------------------------------------
@@ -292,10 +292,11 @@ l2d _ (Lnum n) = Dnum n
 l2d _ Lnil = Dnil
 l2d env (Lref s) = Dref(indexOf s (s:env))
 l2d env(Llambda var lexp) = Dlambda (l2d (var:env) lexp)
-l2d env(Ladd lexp1 lexp2) =
-     case (lexp1, lexp2)of
-        (Lref s, Lref x) -> Dadd(Dref((indexOf s (s:env))+1)) (l2d env lexp2)
-        (lexp1, lexp2) -> Dadd(l2d env lexp1) (l2d env lexp2)
+l2d env(Llambda var lexp) = Dlambda (l2d (var:env) lexp)
+-- l2d env(Ladd lexp1 lexp2) =
+--      case (lexp1, lexp2)of
+--         (Lref s, Lref x) -> Dadd(Dref((indexOf s (s:env))+1)) (l2d env lexp2)
+--         (lexp1, lexp2) -> Dadd(l2d env lexp1) (l2d env lexp2)
 
 l2d env(Lcall lexp1 lexp2) =
     case (lexp1, lexp2)of
@@ -333,6 +334,7 @@ eval env (Dcall dexp1 dexp2) =
 
 -- ¡¡ COMPLETER !!
 
+
 ---------------------------------------------------------------------------
 -- Toplevel                                                              --
 ---------------------------------------------------------------------------
@@ -363,8 +365,8 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
+main = print(sexpOf "(+ 2 )")
 
-main = print(sexpOf "((fn (x) x) 2)")
 
 -- l2d env(Lcall lexp1 lexp2) = Dcall (l2d env lexp1) (l2d env lexp2)
 -- l2d env(Llambda var lexp) = Dlambda (l2d (var:env) lexp)
