@@ -319,12 +319,7 @@ l2d :: [Var] -> Lexp -> Dexp
 l2d _ (Lnum n) = Dnum n
 l2d _ Lnil = Dnil
 l2d _ (Lref "nil") = Dnil
-l2d env (Lref s) = 
-    if (indexOf s (env))== (-1)
-    then
-        Dref(indexOf "add" (env))
-    else
-    Dref(indexOf s (env))
+l2d env (Lref s) =Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
@@ -333,7 +328,7 @@ l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
 --main = print(l2d["x", "+", "y","z"](Llambda "x" (Llambda "y" (Ladd (Lref "x") (Lref "y")))))
 
 indexOf :: Var -> [Var] -> Idx
-indexOf _ [] = -1
+indexOf _ [] = error"empty list"
 indexOf s (x:xs)
     | x == s = 0
     | otherwise = 1+indexOf s xs
