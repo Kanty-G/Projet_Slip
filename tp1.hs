@@ -206,6 +206,12 @@ s2l (Scons sexp1 sexp2) =
                 --(_, _) -> Ladd (s2l sexp1) (s2l sexp2)
                 --(_, Scons (Snum n) (Snum m)) ->Ladd (Ladd (s2l sexp1)(Lnum n)) (Lnum m)
 
+        else if sexp1 ==Ssym "fn"
+        then 
+            case (sexp1,sexp2)of
+                (Ssym n,Scons (Ssym x) y) -> Llambda x (s2l sexp2)
+                (_, (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
+
 
         else
 
@@ -223,6 +229,7 @@ s2l (Scons sexp1 sexp2) =
                 (Snum n, Snil) -> Lnum n
                 (Ssym x, Snil) -> Lref x
                 (Ssym"nil", Snil) -> Lnil
+                --(Scons (Ssym x) Snil, _) ->Llambda x (s2l sexp2)
 
 
             --cas pour Llambda
@@ -312,20 +319,21 @@ l2d :: [Var] -> Lexp -> Dexp
 l2d _ (Lnum n) = Dnum n
 l2d _ Lnil = Dnil
 l2d _ (Lref "nil") = Dnil
-l2d env (Lref s) = Dref(indexOf s (env))
+l2d env (Lref s) = 
+    if (indexOf s (env))== (-1)
+    then
+        Dref(indexOf "add" (env))
+    else
+    Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
-l2d env(Ladd lexp1 lexp2) =
-    case (lexp1, lexp2)of
-        (v1, v2) -> Dadd(l2d ("add":env) v1) (l2d env v2)
-        -- (Ladd v1 v2, Lnil) -> Dadd(Dadd(l2d ("add":env) v1) (l2d env v2)) (l2d env Lnil)
-        (Ladd v1 v2, _) -> Dadd(Dadd(l2d ("add":env) v1) (l2d env v2)) (l2d env lexp2)
+l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
 
 
 --main = print(l2d["x", "+", "y","z"](Llambda "x" (Llambda "y" (Ladd (Lref "x") (Lref "y")))))
 
 indexOf :: Var -> [Var] -> Idx
-indexOf _ [] = error "empty List"
+indexOf _ [] = -1
 indexOf s (x:xs)
     | x == s = 0
     | otherwise = 1+indexOf s xs
@@ -381,7 +389,6 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main = print(dexpOf "(add (add (add 1 2) 3) nil)")
+main = print(lexpOf "(((fn (x) (fn (y) (* x y)))3)5)")
 -- main = print(dexpOf "(add (add 1 2) 3)")
-
 
