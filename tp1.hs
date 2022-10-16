@@ -209,7 +209,7 @@ s2l (Scons sexp1 sexp2) =
         else if sexp1 ==Ssym "fn"
         then 
             case (sexp1,sexp2)of
-                (Ssym n,Scons (Ssym x) y) -> Llambda x (s2l sexp2)
+                --(_,Scons (Ssym x) y) -> Llambda x (s2l sexp2)
                 (_, (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
 
 
@@ -319,7 +319,7 @@ l2d :: [Var] -> Lexp -> Dexp
 l2d _ (Lnum n) = Dnum n
 l2d _ Lnil = Dnil
 l2d _ (Lref "nil") = Dnil
-l2d env (Lref s) =Dref(indexOf s (env))
+l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
@@ -384,6 +384,6 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main = print(lexpOf "(((fn (x) (fn (y) (* x y)))3)5)")
+main = print(lexpOf " ((fn (x) 2) 3)")
 -- main = print(dexpOf "(add (add 1 2) 3)")
 
