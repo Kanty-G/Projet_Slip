@@ -204,7 +204,9 @@ s2l (Scons sexp1 sexp2) =
         then
             case (sexp1,sexp2)of
                 (Snum n, Snil) -> Lnum n
+                (Ssym x, Snil) -> Lref x
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
+                --(_, _) -> Ladd (s2l sexp1) (s2l sexp2)
                 --(_, Scons (Snum n) (Snum m)) ->Ladd (Ladd (s2l sexp1)(Lnum n)) (Lnum m)
             
 
@@ -221,6 +223,7 @@ s2l (Scons sexp1 sexp2) =
                 (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
                 (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
                 (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+                (Ssym x, Snil) -> Lref x
                 (Ssym"nil", Snil) -> Lnil
      
 
@@ -375,6 +378,6 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main = print(lexpOf "(list 2)")
+main = print(lexpOf "(add x x)")
 
 
