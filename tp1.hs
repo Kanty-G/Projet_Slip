@@ -200,23 +200,35 @@ s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
-        case (sexp1,sexp2)of
-            --cas pour Lcall
-            (Snum n, Snil) -> Lnum n
-            (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
-            (Ssym "+", Snum n) -> Lcall (Lref "+")(s2l sexp2)
-            (Ssym "*", Snum n) -> Lcall (Lref "-")(s2l sexp2)
-            (Ssym "/", Snum n) -> Lcall (Lref "*")(s2l(sexp2))
-            (Ssym "-", Snum n) -> Lcall (Lref "-")(s2l sexp2)
-            (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
-            (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
-            (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+        if sexp1 ==Ssym "add" || sexp1 ==Ssym "list"
+        then
+            case (sexp1,sexp2)of
+                (Snum n, Snil) -> Lnum n
+                (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
+                --(_, Scons (Snum n) (Snum m)) ->Ladd (Ladd (s2l sexp1)(Lnum n)) (Lnum m)
+            
+
+        else
+         
+            case (sexp1,sexp2)of
+                --cas pour Lcall
+                (Snum n, Snil) -> Lnum n
+                (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
+                (Ssym "+", Snum n) -> Lcall (Lref "+")(s2l sexp2)
+                (Ssym "*", Snum n) -> Lcall (Lref "-")(s2l sexp2)
+                (Ssym "/", Snum n) -> Lcall (Lref "*")(s2l(sexp2))
+                (Ssym "-", Snum n) -> Lcall (Lref "-")(s2l sexp2)
+                (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
+                (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
+                (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+                (Ssym"nil", Snil) -> Lnil
+     
 
             --cas pour Llambda
 
             --(Ssym s, _) -> Llambda s (s2l sexp2)
             
-            (Ssym "add", _) -> Ladd (s2l sexp1) (s2l sexp2)
+            
             -- (_, (Lcall (Lnum x)(Lnum y))) -> Lcall (s2l(Scons exp1 (Snum x)))(Lnum y)
             -- (Lref "list", _) -> Ladd (s2l exp1) (s2l exp2)
             -- (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
@@ -363,8 +375,6 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main = print(sexpOf "(x (y (add x y)))")
+main = print(lexpOf "(list 2)")
 
 
--- l2d env(Lcall lexp1 lexp2) = Dcall (l2d env lexp1) (l2d env lexp2)
--- l2d env(Llambda var lexp) = Dlambda (l2d (var:env) lexp)
