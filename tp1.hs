@@ -1,3 +1,4 @@
+
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
 
@@ -200,21 +201,22 @@ s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
         case (sexp1,sexp2)of
+            --cas pour Lcall
             (Snum n, Snil) -> Lnum n
             (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
             (Ssym "+", Snum n) -> Lcall (Lref "+")(s2l sexp2)
             (Ssym "*", Snum n) -> Lcall (Lref "-")(s2l sexp2)
             (Ssym "/", Snum n) -> Lcall (Lref "*")(s2l(sexp2))
             (Ssym "-", Snum n) -> Lcall (Lref "-")(s2l sexp2)
-            (Ssym "add", _) -> Ladd (s2l sexp1) (s2l sexp2)
-            --(Ssym s, _) -> Llambda s (s2l sexp2)
             (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
             (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
-            
             (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+
+            --cas pour Llambda
+
             --(Ssym s, _) -> Llambda s (s2l sexp2)
             
-
+            (Ssym "add", _) -> Ladd (s2l sexp1) (s2l sexp2)
             -- (_, (Lcall (Lnum x)(Lnum y))) -> Lcall (s2l(Scons exp1 (Snum x)))(Lnum y)
             -- (Lref "list", _) -> Ladd (s2l exp1) (s2l exp2)
             -- (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
@@ -320,15 +322,13 @@ indexOf s (x:xs)
 eval :: [Value] -> Dexp -> Value
 eval _ (Dnum n) = Vnum n
 eval _ Dnil = Vnil
-eval env (Dref s) = Vfun (\val -> env!!s)
-
+eval env (Dref s) = env!!s
 eval env (Dcall dexp1 dexp2) =
-    let
-        (Vfun f) = eval env dexp1
-    in
-        Vfun (\val -> f(eval env dexp2))
-        -- Vfun f -> f (eval env dexp2)
-        --Vfun (\val -> eval env dexp1)
+     let
+        (Vfun val) = eval env dexp1
+        evalDexp = eval env dexp2
+     in
+        val evalDexp
 
 -- ¡¡ COMPLETER !!
 
@@ -363,7 +363,7 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main = print(dexpOf("(add 1 2)"))
+main = print(sexpOf "(x (y (add x y)))")
 
 
 -- l2d env(Lcall lexp1 lexp2) = Dcall (l2d env lexp1) (l2d env lexp2)
