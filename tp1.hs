@@ -1,4 +1,3 @@
-
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
 
@@ -206,10 +205,10 @@ s2l (Scons sexp1 sexp2) =
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
                 --(_, _) -> Ladd (s2l sexp1) (s2l sexp2)
                 --(_, Scons (Snum n) (Snum m)) ->Ladd (Ladd (s2l sexp1)(Lnum n)) (Lnum m)
-            
+
 
         else
-         
+
             case (sexp1,sexp2)of
                 --cas pour Lcall
                 (Snum n, Snil) -> Lnum n
@@ -224,13 +223,13 @@ s2l (Scons sexp1 sexp2) =
                 (Snum n, Snil) -> Lnum n
                 (Ssym x, Snil) -> Lref x
                 (Ssym"nil", Snil) -> Lnil
-     
+
 
             --cas pour Llambda
 
             --(Ssym s, _) -> Llambda s (s2l sexp2)
-            
-            
+
+
             -- (_, (Lcall (Lnum x)(Lnum y))) -> Lcall (s2l(Scons exp1 (Snum x)))(Lnum y)
             -- (Lref "list", _) -> Ladd (s2l exp1) (s2l exp2)
             -- (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
@@ -312,10 +311,15 @@ data Dexp = Dnum Int            -- Constante entière.
 l2d :: [Var] -> Lexp -> Dexp
 l2d _ (Lnum n) = Dnum n
 l2d _ Lnil = Dnil
+l2d _ (Lref "nil") = Dnil
 l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
-l2d env(Ladd lexp1 lexp2) = Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
+l2d env(Ladd lexp1 lexp2) =
+    case (lexp1, lexp2)of
+        (v1, v2) -> Dadd(l2d ("add":env) v1) (l2d env v2)
+        -- (Ladd v1 v2, Lnil) -> Dadd(Dadd(l2d ("add":env) v1) (l2d env v2)) (l2d env Lnil)
+        (Ladd v1 v2, _) -> Dadd(Dadd(l2d ("add":env) v1) (l2d env v2)) (l2d env lexp2)
 
 
 --main = print(l2d["x", "+", "y","z"](Llambda "x" (Llambda "y" (Ladd (Lref "x") (Lref "y")))))
@@ -377,6 +381,7 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main = print(lexpOf "(add (add 1 2) nil)")
+main = print(dexpOf "(add (add (add 1 2) 3) nil)")
+-- main = print(dexpOf "(add (add 1 2) 3)")
 
 
