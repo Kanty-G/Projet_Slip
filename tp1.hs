@@ -325,7 +325,7 @@ l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
 
 
---main = print(l2d["x", "+", "y","z"](Llambda "x" (Llambda "y" (Ladd (Lref "x") (Lref "y")))))
+--main = print(l2d["+", "-", "/","*"](Llambda "t" (Llambda "y" (Ladd (Lref "x") (Lref "y")))))
 
 indexOf :: Var -> [Var] -> Idx
 indexOf _ [] = error"empty list"
@@ -350,6 +350,9 @@ eval env (Dcall dexp1 dexp2) =
         evalDexp = eval env dexp2
      in
         val evalDexp
+--eval env (Dlambda dexp1 dexp2) = 
+eval env (Dadd dexp1 dexp2) = Vcons(eval env dexp1)(eval env dexp2)
+
 
 -- ¡¡ COMPLETER !!
 
@@ -384,6 +387,6 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main = print(lexpOf " ((fn (x) 2) 3)")
+main = print(valOf "(add (add 1 2) nil)")
 -- main = print(dexpOf "(add (add 1 2) 3)")
 
