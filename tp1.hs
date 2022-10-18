@@ -204,13 +204,9 @@ s2l (Scons sexp1 sexp2) =
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
-                --(_, _) -> Ladd (s2l sexp1) (s2l sexp2)
-                --(_, Scons (Snum n) (Snum m)) ->Ladd (Ladd (s2l sexp1)(Lnum n)) (Lnum m)
-
         else if sexp1 ==Ssym "fn"
         then 
             case (sexp1,sexp2)of
-                --(_,Scons (Ssym x) y) -> Llambda x (s2l sexp2)
                 (_, (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
 
 
@@ -218,7 +214,7 @@ s2l (Scons sexp1 sexp2) =
 
             case (sexp1,sexp2)of
                 --cas pour Lcall
-                (Snum n, Snil) -> Lnum n
+                (_, Snil) -> s2l sexp1
                 (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
                 (Ssym "+", Snum n) -> Lcall (Lref "+")(s2l sexp2)
                 (Ssym "*", Snum n) -> Lcall (Lref "-")(s2l sexp2)
@@ -227,27 +223,6 @@ s2l (Scons sexp1 sexp2) =
                 (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
                 (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
                 (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
-                (Snum n, Snil) -> Lnum n
-                (Ssym x, Snil) -> Lref x
-                (Ssym"nil", Snil) -> Lnil
-                --(Scons (Ssym x) Snil, _) ->Llambda x (s2l sexp2)
-
-
-            --cas pour Llambda
-
-            --(Ssym s, _) -> Llambda s (s2l sexp2)
-
-
-            -- (_, (Lcall (Lnum x)(Lnum y))) -> Lcall (s2l(Scons exp1 (Snum x)))(Lnum y)
-            -- (Lref "list", _) -> Ladd (s2l exp1) (s2l exp2)
-            -- (_, Lref  "list") -> Ladd (s2l exp1) (s2l exp2)
-            -- (Lref  "add", _) -> Ladd (s2l exp1) (s2l exp2)
-            -- (_, Lref  "add") -> Ladd (s2l exp1) (s2l exp2)
-
-
-            -- (_, Lref  n) -> Llambda n (s2l exp1)
-            -- (Lref  n, _) -> Llambda n (s2l exp2)
-            -- (_,_) -> Lcall var1 var2
 
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
@@ -355,7 +330,7 @@ eval env (Dcall dexp1 dexp2) =
         evalDexp = eval env dexp2
      in
         val evalDexp
-eval env (Dlambda dexp) = Vfun(\value -> eval(value:env) dexp)
+eval env (Dlambda dexp) = Vfun(\value -> eval (value:env) dexp)
 eval env (Dadd dexp1 dexp2) = Vcons(eval env dexp1)(eval env dexp2)
 -- ¡¡ COMPLETER !!
 
@@ -394,11 +369,3 @@ main :: IO ()
 main = print(valOf "(((fn (x) (fn (y) (* x y)))3)5)")
 --Lcall (Lcall (Lref "+") (Lnum 3)) (Lnum 2) => (+ 3 2)
 --Llambda "x" (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 2)) =>(fn (x) (+ x 2))
-
-
---Lcall (Llambda "x" (Lref "x")) (Lnum 2)
---Dcall (Dlambda (Dref 0)) (Dnum 2)
-
---Lcall (Lcall (Llambda "x" (Llambda "y" (Lcall (Lcall (Lref "*") (Lref "x")) (Lref "y")))) (Lnum 2)) (Lnum 5)
-
---Lcall (Lcall (Llambda "x" (Llambda "y" (Lcall (Lcall (Lref "*") (Lref "x")) (Lref "y")))) (Lnum 15)) (Lnum 5)
