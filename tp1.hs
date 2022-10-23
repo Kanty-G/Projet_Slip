@@ -182,8 +182,8 @@ type Var = String
 
 data Lexp = Lnum Int            -- Constante entière.
           | Lref Var            -- Référence à une variable.
-          | Llambda Var Lexp    -- Fonction anonyme prenant un argument. fn
-          | Lcall Lexp Lexp     -- Appel de fonction, avec un argument. (e1;;;)
+          | Llambda Var Lexp    -- Fonction anonyme prenant un argument. 
+          | Lcall Lexp Lexp     -- Appel de fonction, avec un argument. 
           | Lnil                -- Constructeur de liste vide.
           | Ladd Lexp Lexp      -- Constructeur de liste.
           | Lmatch Lexp Var Var Lexp Lexp -- Expression conditionelle.
@@ -204,11 +204,20 @@ s2l (Scons sexp1 sexp2) =
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
+
         else if sexp1 ==Ssym "fn"
         then 
             case (sexp1,sexp2)of
+           
                 (_, (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
 
+        else if sexp1 ==Ssym "let"
+        then 
+            case (sexp1,sexp2)of
+                (_, (Scons (Scons(Scons (Ssym x) y) _) n)) -> Lfix [(x, (s2l y))] (s2l n)
+                --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
+                
+                
 
         else
 
@@ -216,13 +225,14 @@ s2l (Scons sexp1 sexp2) =
                 --cas pour Lcall
                 (_, Snil) -> s2l sexp1
                 (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
-                (Ssym "+", Snum n) -> Lcall (Lref "+")(s2l sexp2)
-                (Ssym "*", Snum n) -> Lcall (Lref "-")(s2l sexp2)
-                (Ssym "/", Snum n) -> Lcall (Lref "*")(s2l(sexp2))
-                (Ssym "-", Snum n) -> Lcall (Lref "-")(s2l sexp2)
+                (Ssym "+", Snum _) -> Lcall (Lref "+")(s2l sexp2)
+                (Ssym "*", Snum _) -> Lcall (Lref "-")(s2l sexp2)
+                (Ssym "/", Snum _) -> Lcall (Lref "*")(s2l(sexp2))
+                (Ssym "-", Snum _) -> Lcall (Lref "-")(s2l sexp2)
                 (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
                 (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
                 (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+                
 
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
@@ -302,9 +312,8 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
+l2d env(Lfix [(var,lexpList)] lexp) = Dfix [(l2d env lexpList)] (l2d (var:env) lexp)  --maybe [...(var:env)...]
 
-
---main = print(l2d["+", "-", "/","*"](Llambda "t" (Llambda "y" (Ladd (Lref "x") (Lref "y")))))
 indexOf ::(Eq a) => a -> [a] -> Int
 indexOf _ [] = error"empty list"
 indexOf s (x:xs)
@@ -332,6 +341,11 @@ eval env (Dcall dexp1 dexp2) =
         val evalDexp
 eval env (Dlambda dexp) = Vfun(\value -> eval (value:env) dexp)
 eval env (Dadd dexp1 dexp2) = Vcons(eval env dexp1)(eval env dexp2)
+eval env (Dfix [dexpList] dexp) = 
+    let 
+        expandEnv =(eval env dexpList):env
+    in 
+        eval expandEnv dexp
 -- ¡¡ COMPLETER !!
 
 
@@ -366,6 +380,11 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(valOf "(((fn (x) (fn (y) (* x y)))3)5)")
---Lcall (Lcall (Lref "+") (Lnum 3)) (Lnum 2) => (+ 3 2)
---Llambda "x" (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 2)) =>(fn (x) (+ x 2))
+main = print(valOf "(let ((t 1)) t)")
+--Lfix["x",Lnum 1] Lref x
+--main = print(lexpOf "(let ((x 1) (y 3)) x)")
+--Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) (Scons (Scons (Ssym "y") (Scons (Snum 3) Snil)) Snil)) (Scons (Ssym "x") Snil))
+
+--Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) Snil) (Scons (Ssym "x") Snil)) => (let ((x 1)) x)
+
+
