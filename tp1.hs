@@ -328,7 +328,12 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix env2 lexp) = Dfix (l2d env (map snd env2))(l2d (var:env) lexp)  --maybe [...(var:env)...]
+l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (var:env) lexp)  --maybe [...(var:env)...]
+
+lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
+lexpToDexp _ [] = []
+lexpToDexp env [x] = [l2d env x]
+lexpToDexp env (x:xs) = lexpToDexp env (x:xs)
 
 
 indexOf ::(Eq a) => a -> [a] -> Int
@@ -403,5 +408,4 @@ main = print(dexpOf "(let ((x 1)(y 2)(z 3)(w 4)) x)")
 --Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) (Scons (Scons (Ssym "y") (Scons (Snum 3) Snil)) Snil)) (Scons (Ssym "x") Snil))
 
 --Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) Snil) (Scons (Ssym "x") Snil)) => (let ((x 1)) x)
-
 
