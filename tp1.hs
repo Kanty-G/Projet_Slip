@@ -257,7 +257,6 @@ s2l' env (Scons sexp1 sexp2) =
 
         ((Scons n m), (Scons x y))-> s2l' env (Scons n m) ++ s2l' env (Scons x y)
         ((Scons n m),_) -> s2l' env (Scons n m)
-        -- (_,(Scons n m)) -> s2l' env (Scons n m)
 
 --Fonction qui gère le cas récursif de la fonction list
 s2l'' :: Sexp -> Lexp
@@ -270,10 +269,6 @@ s2l'' (Scons sexp1 sexp2)=
         (_, Snil) -> s2l'' sexp1
         (_,_)->Ladd(s2l'' (sexp1))(s2l'' (sexp2))
 
-
-
-
---(_, Snil) -> s2l sexp1
 
 
 
@@ -345,12 +340,17 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
---l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (var:env) lexp)  --maybe [...(var:env)...]
+l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d ((addEnv (map fst env2) env)) lexp)  --maybe [...(var:env)...]
 
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
 lexpToDexp _ [] = []
 lexpToDexp env [x] = [l2d env x]
-lexpToDexp env (x:xs) = lexpToDexp env (x:xs)
+lexpToDexp env (x:xs) = [(l2d env x)]++ lexpToDexp env xs
+
+addEnv::[Var]->[Var]->[Var]
+addEnv [] env= env
+addEnv [x] env= (x):env
+addEnv (x:env2) env = (x):env++ (addEnv env2 env)
 
 
 indexOf ::(Eq a) => a -> [a] -> Int
@@ -380,13 +380,20 @@ eval env (Dcall dexp1 dexp2) =
         val evalDexp
 eval env (Dlambda dexp) = Vfun(\value -> eval (value:env) dexp)
 eval env (Dadd dexp1 dexp2) = Vcons(eval env dexp1)(eval env dexp2)
-eval env (Dfix [dexpList] dexp) =
+eval env (Dfix dexpList dexp) =
     let
-        expandEnv =(eval env dexpList):env
+        --expandEnv =(eval env dexpList):env
+        expandEn= expandEnv env dexpList
     in
-        eval expandEnv dexp
+        eval expandEn dexp
 -- ¡¡ COMPLETER !!
 
+
+--fonction pour évaluer la liste des dexp
+expandEnv::[Value]->[Dexp]->[Value]
+expandEnv _ [] = []
+expandEnv env [x]= (eval env x):env
+expandEnv env (x:env2) = (eval env x):env ++ expandEnv env env2
 
 ---------------------------------------------------------------------------
 -- Toplevel                                                              --
@@ -419,7 +426,7 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(lexpOf "(list 1 2 3 4 )")
+main = print(valOf "(let ((x 1)(y 2)) y)")
 --Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) (Scons (Snum 4) Snil))))
 --Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) Snil)))
 --Lfix["x",Lnum 1] Lref x
