@@ -266,7 +266,7 @@ s2l'' Snil = Lnil
 s2l'' (Ssym s) = Lref s
 s2l'' (Scons sexp1 sexp2)=
     case (sexp1, sexp2) of
-        (_, Snil) -> s2l'' sexp1
+        (_, Snil) -> Ladd(s2l'' sexp1) (s2l'' sexp2)
         (_,_)->Ladd(s2l'' (sexp1))(s2l'' (sexp2))
 
 
@@ -426,7 +426,8 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(valOf "(let ((x 1)(y 2)) y)")
+main = print(dexpOf "(list 1 2 3)")
+--Ladd (Lnum 1) (Ladd (Lnum 2) (Ladd (Lnum 3) (Lnil)))
 --Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) (Scons (Snum 4) Snil))))
 --Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) Snil)))
 --Lfix["x",Lnum 1] Lref x
