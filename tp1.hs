@@ -200,11 +200,17 @@ s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
-        if sexp1 ==Ssym "add" || sexp1 ==Ssym "list"
+        if sexp1 ==Ssym "add" 
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
+        else if sexp1 ==Ssym "list"
+        then
+            case (sexp1,sexp2)of
+                (Ssym _, Scons m n) -> Ladd (s2l m) (s2l'' n)
 
+
+                
         else if sexp1 ==Ssym "fn"
         then
             case (sexp1,sexp2)of
@@ -236,6 +242,7 @@ s2l (Scons sexp1 sexp2) =
 
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
+
 --Fonction qui gère le cas récursif de la fonction let
 
 type Env2 = [(Var, Lexp)]
@@ -252,11 +259,21 @@ s2l' env (Scons sexp1 sexp2) =
         ((Scons n m),_) -> s2l' env (Scons n m)
         -- (_,(Scons n m)) -> s2l' env (Scons n m)
 
+--Fonction qui gère le cas récursif de la fonction list
+s2l'' :: Sexp -> Lexp
+s2l'' (Snum n) = Lnum n
+s2l'' (Ssym "nil") = Lnil
+s2l'' Snil = Lnil
+s2l'' (Ssym s) = Lref s
+s2l'' (Scons sexp1 sexp2)=
+    case (sexp1, sexp2) of
+        (_, Snil) -> s2l'' sexp1
+        (_,_)->Ladd(s2l'' (sexp1))(s2l'' (sexp2))
 
 
 
 
-
+--(_, Snil) -> s2l sexp1
 
 
 
@@ -328,7 +345,7 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (var:env) lexp)  --maybe [...(var:env)...]
+--l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (var:env) lexp)  --maybe [...(var:env)...]
 
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
 lexpToDexp _ [] = []
@@ -402,7 +419,9 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(dexpOf "(let ((x 1)(y 2)(z 3)(w 4)) x)")
+main = print(lexpOf "(list 1 2 3 4 )")
+--Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) (Scons (Snum 4) Snil))))
+--Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) Snil)))
 --Lfix["x",Lnum 1] Lref x
 --main = print(lexpOf "(let ((x 1) (y 3)) x)")
 --Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) (Scons (Scons (Ssym "y") (Scons (Snum 3) Snil)) Snil)) (Scons (Ssym "x") Snil))
