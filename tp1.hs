@@ -206,18 +206,18 @@ s2l (Scons sexp1 sexp2) =
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
 
         else if sexp1 ==Ssym "fn"
-        then 
+        then
             case (sexp1,sexp2)of
-           
+
                 (_, (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
 
         else if sexp1 ==Ssym "let"
-        then 
+        then
             case (sexp1,sexp2)of
-                (_, (Scons (Scons(Scons (Ssym x) y) _) n)) -> Lfix [(x, (s2l y))] (s2l n)
-                --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
-                
-                
+                (_, (Scons n m)) -> Lfix (s2l' [] n) (s2l m)
+        --         --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
+
+
 
         else
 
@@ -232,14 +232,30 @@ s2l (Scons sexp1 sexp2) =
                 (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
                 (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
                 (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
-                
+
 
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
+--Fonction qui gère le cas récursif de la fonction let
+
+type Env2 = [(Var, Lexp)]
+
+s2l' :: Env2 -> Sexp -> Env2
+s2l' env (Snil) = []
+s2l' env (Snum n) = []
+s2l' env (Ssym x) = []
+s2l' env (Scons (Ssym x) y) = (x, s2l y):env
+s2l' env (Scons sexp1 sexp2) =
+    case (sexp1,sexp2) of
+
+        ((Scons n m), (Scons x y))-> s2l' env (Scons n m) ++ s2l' env (Scons x y)
+        ((Scons n m),_) -> s2l' env (Scons n m)
+        -- (_,(Scons n m)) -> s2l' env (Scons n m)
 
 
---                                         Llambda         Llambda
---Scons (Scons (Ssym "fn") (Scons (Scons (Ssym "x") Snil) (Scons (Ssym "x") Snil))) (Scons (Snum 2) Snil)
+
+
+
 
 
 
@@ -312,7 +328,8 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix [(var,lexpList)] lexp) = Dfix [(l2d env lexpList)] (l2d (var:env) lexp)  --maybe [...(var:env)...]
+l2d env(Lfix env2 lexp) = Dfix (l2d env (map snd env2))(l2d (var:env) lexp)  --maybe [...(var:env)...]
+
 
 indexOf ::(Eq a) => a -> [a] -> Int
 indexOf _ [] = error"empty list"
@@ -341,10 +358,10 @@ eval env (Dcall dexp1 dexp2) =
         val evalDexp
 eval env (Dlambda dexp) = Vfun(\value -> eval (value:env) dexp)
 eval env (Dadd dexp1 dexp2) = Vcons(eval env dexp1)(eval env dexp2)
-eval env (Dfix [dexpList] dexp) = 
-    let 
+eval env (Dfix [dexpList] dexp) =
+    let
         expandEnv =(eval env dexpList):env
-    in 
+    in
         eval expandEnv dexp
 -- ¡¡ COMPLETER !!
 
@@ -380,7 +397,7 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(valOf "(let ((t 1)) t)")
+main = print(dexpOf "(let ((x 1)(y 2)(z 3)(w 4)) x)")
 --Lfix["x",Lnum 1] Lref x
 --main = print(lexpOf "(let ((x 1) (y 3)) x)")
 --Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) (Scons (Scons (Ssym "y") (Scons (Snum 3) Snil)) Snil)) (Scons (Ssym "x") Snil))
