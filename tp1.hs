@@ -1,6 +1,8 @@
 
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use guards" #-}
 
 -- Ce fichier défini les fonctionalités suivantes:
 -- - Analyseur lexical
@@ -200,30 +202,23 @@ s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
-        if sexp1 ==Ssym "add" 
+        if sexp1 ==Ssym "add"
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
         else if sexp1 ==Ssym "list"
         then
-            case (sexp1,sexp2)of
-                (Ssym _, Scons m n) -> Ladd (s2l m) (s2l'' n)
+            s2l'' sexp2
 
-
-                
         else if sexp1 ==Ssym "fn"
         then
             case (sexp1,sexp2)of
-
                 (_, (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
 
         else if sexp1 ==Ssym "let"
         then
             case (sexp1,sexp2)of
                 (_, (Scons n m)) -> Lfix (s2l' [] n) (s2l m)
-        --         --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
-
-
 
         else
 
@@ -254,7 +249,6 @@ s2l' env (Ssym x) = []
 s2l' env (Scons (Ssym x) y) = (x, s2l y):env
 s2l' env (Scons sexp1 sexp2) =
     case (sexp1,sexp2) of
-
         ((Scons n m), (Scons x y))-> s2l' env (Scons n m) ++ s2l' env (Scons x y)
         ((Scons n m),_) -> s2l' env (Scons n m)
 
@@ -266,11 +260,8 @@ s2l'' Snil = Lnil
 s2l'' (Ssym s) = Lref s
 s2l'' (Scons sexp1 sexp2)=
     case (sexp1, sexp2) of
-        (_, Snil) -> Ladd(s2l'' sexp1) (s2l'' sexp2)
-        (_,_)->Ladd(s2l'' (sexp1))(s2l'' (sexp2))
-
-
-
+        (_,Scons x Snil) -> Ladd(s2l sexp1)(s2l x)
+        (_,_) -> Ladd(s2l'' sexp1)(s2l'' sexp2)
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
@@ -426,13 +417,10 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(dexpOf "(list 1 2 3)")
---Ladd (Lnum 1) (Ladd (Lnum 2) (Ladd (Lnum 3) (Lnil)))
---Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) (Scons (Snum 4) Snil))))
+main = print(valOf"(list 1 2 3 4)")
+--Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) Snil))
+--Ladd (Lnum 1) (Lnum 2)
 --Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) Snil)))
---Lfix["x",Lnum 1] Lref x
---main = print(lexpOf "(let ((x 1) (y 3)) x)")
---Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) (Scons (Scons (Ssym "y") (Scons (Snum 3) Snil)) Snil)) (Scons (Ssym "x") Snil))
+--Ladd (Ladd(Lnum 1 Lnum 2)) Lnum3
 
---Scons (Ssym "let") (Scons (Scons (Scons (Ssym "x") (Scons (Snum 1) Snil)) Snil) (Scons (Ssym "x") Snil)) => (let ((x 1)) x)
 
