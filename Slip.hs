@@ -201,34 +201,41 @@ s2l (Ssym s) = Lref s
 s2l (Scons sexp1 sexp2) =
         case (sexp1,sexp2)of
             (Ssym "add", Scons m n) -> Ladd (s2l m) (s2l n)
-            (Ssym "list", Scons m n) -> Ladd (s2l m) (s2l n)
-            (Ssym "fn", (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
-            (Ssym "let", (Scons (Scons(Scons (Ssym x) y) _) n)) -> Lfix [(x, (s2l y))] (s2l n)
+            (Ssym "list",Scons m n) -> Ladd (s2l m) (s2l'' n)
+            (Ssym "fn", Scons (Scons (Ssym x) Snil) (Scons n Snil)) ->Llambda x (s2l n)
+            (Ssym "let",Scons n m) -> Lfix (s2l' [] n) (s2l m)
             (_, Snil) -> s2l sexp1
             (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
-            (Ssym "+", Snum _) -> Lcall (Lref "+")(s2l sexp2)
-            (Ssym "*", Snum _) -> Lcall (Lref "-")(s2l sexp2)
-            (Ssym "/", Snum _) -> Lcall (Lref "*")(s2l(sexp2))
-            (Ssym "-", Snum _) -> Lcall (Lref "-")(s2l sexp2)
+            (Ssym n, Snum _) -> Lcall (Lref n)(s2l sexp2)
             (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
             (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
             (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
 
-
-
-
-
-        
-                
-
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
+--fonction qui gère la récursion dans let et crée une liste de type [(Var,Lexp)]
+type Env1 = [(Var, Lexp)]
+s2l' :: Env1 -> Sexp -> Env1
+s2l' env1 Snil = []
+s2l' env1 (Snum n) = []
+s2l' env1 (Ssym n) = []
+s2l' env1 (Scons (Ssym x) y) = (x, s2l y):env1
+s2l' env1 (Scons sexp1 sexp2) =
+    case (sexp1,sexp2) of
+        (Scons n m, Scons x y)-> s2l' env1 (Scons n m) ++ s2l' env1 (Scons x y)
+        (Scons n m,_) -> s2l' env1 (Scons n m)
 
-
---                                         Llambda         Llambda
---Scons (Scons (Ssym "fn") (Scons (Scons (Ssym "x") Snil) (Scons (Ssym "x") Snil))) (Scons (Snum 2) Snil)
-
-
+--fonction qui gère la récursion dans les listes d
+s2l'' :: Sexp -> Lexp
+s2l'' (Snum n) = Lnum n
+s2l'' (Ssym "nil") = Lnil
+s2l'' Snil = Lnil
+s2l'' (Ssym s) = Lref s
+s2l'' (Scons sexp1 sexp2)=
+    case (sexp1, sexp2) of
+        (_, Snil) -> Ladd (s2l'' sexp1) Lnil
+        (_, Scons m Snil) -> Ladd(s2l'' sexp1)(s2l'' m)
+        (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
 
 ---------------------------------------------------------------------------
@@ -262,8 +269,6 @@ env0 = [("+", Vfun (\ (Vnum x) -> Vfun (\ (Vnum y) -> Vnum (x + y)))),
         ("/", Vfun (\ (Vnum x) -> Vfun (\ (Vnum y) -> Vnum (x `div` y)))),
         ("-", Vfun (\ (Vnum x) -> Vfun (\ (Vnum y) -> Vnum (x - y))))]
 
-
-
 ---------------------------------------------------------------------------
 -- Représentation intermédiaire Dexp                                     --
 ---------------------------------------------------------------------------
@@ -295,11 +300,23 @@ l2d :: [Var] -> Lexp -> Dexp
 l2d _ (Lnum n) = Dnum n
 l2d _ Lnil = Dnil
 l2d _ (Lref "nil") = Dnil
-l2d env (Lref s) = Dref(indexOf s (env))
+l2d env (Lref s) = Dref(indexOf s env)
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix [(var,lexpList)] lexp) = Dfix [(l2d env lexpList)] (l2d (var:env) lexp)  --maybe [...(var:env)...]
+l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp) 
+
+--fonction qui passe d'une liste de Lexp à une liste de dexp
+lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
+lexpToDexp _ [] = []
+lexpToDexp env [x] = [l2d env x]
+lexpToDexp env (x:xs) = l2d env x : lexpToDexp env xs
+
+--fonction qui étend l'environnement
+addEnv::[Var]->[Var]->[Var]
+addEnv [] env= env
+addEnv [x] env= x:env
+addEnv (x:env2) env = x:env ++ addEnv env2 env
 
 indexOf ::(Eq a) => a -> [a] -> Int
 indexOf _ [] = error"empty list"
@@ -307,8 +324,6 @@ indexOf s (x:xs)
     | x == s = 0
     | otherwise = 1+indexOf s xs
 
-
--- ¡¡ COMPLETER !!
 
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
@@ -319,7 +334,7 @@ indexOf s (x:xs)
 eval :: [Value] -> Dexp -> Value
 eval _ (Dnum n) = Vnum n
 eval _ Dnil = Vnil
-eval env (Dref s) = (env)!!s
+eval env (Dref s) = env !! s
 eval env (Dcall dexp1 dexp2) =
      let
         (Vfun val) = eval env dexp1
@@ -328,14 +343,19 @@ eval env (Dcall dexp1 dexp2) =
         val evalDexp
 eval env (Dlambda dexp) = Vfun(\value -> eval (value:env) dexp)
 eval env (Dadd dexp1 dexp2) = Vcons(eval env dexp1)(eval env dexp2)
-eval env (Dfix [dexpList] dexp) = 
-    let 
-        expandEnv =(eval env dexpList):env
-    in 
-        eval expandEnv dexp
--- ¡¡ COMPLETER !!
+eval env (Dfix dexpList dexp) =
+    let
+        env2 = expandEnv  env dexpList
+    
+    in
+        eval env2 dexp
 
 
+--fonction pour évaluer la liste des dexp
+expandEnv::[Value]->[Dexp]->[Value]
+expandEnv _ [] = []
+expandEnv env [x]= (eval env x):env
+expandEnv env (x:env2) = (eval env x):env ++ expandEnv env env2
 ---------------------------------------------------------------------------
 -- Toplevel                                                              --
 ---------------------------------------------------------------------------
@@ -367,4 +387,5 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(valOf "(list nil)")
+
+main = print(lexpOf "(let ((* +) (/ -)) (* 5 (/ 3 1))))")
