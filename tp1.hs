@@ -1,4 +1,3 @@
-
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
 
@@ -200,18 +199,16 @@ s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
-        if sexp1 ==Ssym "add" 
+        if sexp1 ==Ssym "add"
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
         else if sexp1 ==Ssym "list"
         then
             case (sexp1,sexp2)of
-                
+
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l'' n)
 
-
-                
         else if sexp1 ==Ssym "fn"
         then
             case (sexp1,sexp2)of
@@ -258,6 +255,9 @@ s2l' env (Scons sexp1 sexp2) =
         ((Scons n m),_) -> s2l' env (Scons n m)
 
 --Fonction qui gère le cas récursif de la fonction list
+
+--Ladd (Lnum 1) (Ladd (Lnum 2) (Lnum 3))
+
 s2l'' :: Sexp -> Lexp
 s2l'' (Snum n) = Lnum n
 s2l'' (Ssym "nil") = Lnil
@@ -265,10 +265,11 @@ s2l'' Snil = Lnil
 s2l'' (Ssym s) = Lref s
 s2l'' (Scons sexp1 sexp2)=
     case (sexp1, sexp2) of
-        (_, Snil) -> (s2l'' sexp1) 
-        (_,_)->Ladd(s2l'' (sexp1))(s2l'' (sexp2))
+        (_, Snil) -> Ladd (s2l'' sexp1) Lnil
+        (_, Scons m Snil) -> Ladd(s2l'' sexp1)(s2l'' m)
+        (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
-
+--Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) Snil))
 
 
 ---------------------------------------------------------------------------
@@ -425,4 +426,4 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(valOf "(list 1 2 3)")
+main = print(valOf "(list 1 nil)")
