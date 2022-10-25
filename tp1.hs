@@ -1,8 +1,6 @@
 
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Use guards" #-}
 
 -- Ce fichier défini les fonctionalités suivantes:
 -- - Analyseur lexical
@@ -202,23 +200,31 @@ s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
-        if sexp1 ==Ssym "add"
+        if sexp1 ==Ssym "add" 
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
         else if sexp1 ==Ssym "list"
         then
-            s2l'' sexp2
+            case (sexp1,sexp2)of
+                
+                (Ssym _, Scons m n) -> Ladd (s2l m) (s2l'' n)
 
+
+                
         else if sexp1 ==Ssym "fn"
         then
             case (sexp1,sexp2)of
+
                 (_, (Scons (Scons (Ssym x) Snil) (Scons n Snil))) ->Llambda x (s2l n)
 
         else if sexp1 ==Ssym "let"
         then
             case (sexp1,sexp2)of
                 (_, (Scons n m)) -> Lfix (s2l' [] n) (s2l m)
+        --         --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
+
+
 
         else
 
@@ -226,13 +232,11 @@ s2l (Scons sexp1 sexp2) =
                 --cas pour Lcall
                 (_, Snil) -> s2l sexp1
                 (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
-                (Ssym "+", Snum _) -> Lcall (Lref "+")(s2l sexp2)
-                (Ssym "*", Snum _) -> Lcall (Lref "-")(s2l sexp2)
-                (Ssym "/", Snum _) -> Lcall (Lref "*")(s2l(sexp2))
-                (Ssym "-", Snum _) -> Lcall (Lref "-")(s2l sexp2)
                 (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
                 (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
                 (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+
+                --Scons (Ssym "nil") (Scons (Snum 1) Snil)
 
 
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
@@ -249,6 +253,7 @@ s2l' env (Ssym x) = []
 s2l' env (Scons (Ssym x) y) = (x, s2l y):env
 s2l' env (Scons sexp1 sexp2) =
     case (sexp1,sexp2) of
+
         ((Scons n m), (Scons x y))-> s2l' env (Scons n m) ++ s2l' env (Scons x y)
         ((Scons n m),_) -> s2l' env (Scons n m)
 
@@ -260,8 +265,11 @@ s2l'' Snil = Lnil
 s2l'' (Ssym s) = Lref s
 s2l'' (Scons sexp1 sexp2)=
     case (sexp1, sexp2) of
-        (_,Scons x Snil) -> Ladd(s2l sexp1)(s2l x)
-        (_,_) -> Ladd(s2l'' sexp1)(s2l'' sexp2)
+        (_, Snil) -> (s2l'' sexp1) 
+        (_,_)->Ladd(s2l'' (sexp1))(s2l'' (sexp2))
+
+
+
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
@@ -331,7 +339,7 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d ((addEnv (map fst env2) env)) lexp)  --maybe [...(var:env)...]
+l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp)  --maybe [...(var:env)...]
 
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
 lexpToDexp _ [] = []
@@ -417,10 +425,4 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(valOf"(list 1 2 3 4)")
---Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) Snil))
---Ladd (Lnum 1) (Lnum 2)
---Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) Snil)))
---Ladd (Ladd(Lnum 1 Lnum 2)) Lnum3
-
-
+main = print(valOf "(list 1 2 3)")
