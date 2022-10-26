@@ -36,8 +36,10 @@ chacune allait réfléchir de son côtté et on mettait nos id ́ees ensemble po
 Après avoir lu et relu le pdf de l’énoncé, on a ciblé les points importants qui vont nous aider à faire le travail.
 
 Problèmes résolues: 
+------------------
 
 1)Match
+-------
 
 Match est une fonction qui branche uniquement sur les list (nil et add) telle que mentionné dans l’énoncé.
 
