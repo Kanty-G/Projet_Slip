@@ -48,6 +48,7 @@ En relisant l’énoncé nous avions pu trouver à quoi le lexp devrait ressembl
 Le  (match e (nil en) ((add x xs) ec))  est Lmatch e x xs ec en, ainsi nous avons pensé à deux solutions :
 
 1)Lmatch Lnil "x" "y" (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) (Lnum 1) 
+
 2)Lmatch Lnil "x" "y" (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) (Lcall Lnil (Lnum 1))
 
 Nous avons fini par choisir la première  solution  car (nil 1) equivalent à “(nil en)” de (match e (nil en) ((add x xs) ec)) doit donner comme lexp (s2l en) donc (s2l 1) qui est Lnum 1 
