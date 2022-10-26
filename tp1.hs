@@ -362,6 +362,7 @@ l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
 l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp)
+l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3)= Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)
 
 --Lfix [("f",Lcall (Lref "x") (Lref "y")),("*",Lcall (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1)) (Lref "y"))]
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
@@ -408,7 +409,16 @@ eval env (Dfix dexpList dexp) =
         expandEn= expandEnv env dexpList
     in
         eval expandEn dexp
--- ¡¡ COMPLETER !!
+eval env (Dmatch dexp1 dexp2 dexp3)= 
+        case (dexp1,dexp3) of
+            (Dnil, Dcall Dnil n)-> eval env n
+            (Dcall Dnil _, Dcall Dnil n)-> eval env n
+            (Dadd m n,_)-> 
+                let
+                    expandEnv =(eval env n):((eval env m):env)
+                in
+                   eval expandEnv dexp2
+            
 
 
 --fonction pour évaluer la liste des dexp
@@ -455,7 +465,7 @@ main :: IO ()
 --     y = 5
 -- in
 --     (* (+ x 1) y)                       
-main = print(valOf "(let (((f x y) (* (+ x 1) y))) (f 5 6))")
+main = print(valOf "(match (add 1 2) (nil 1) ((add x y) (+ x y)))")
 -- case (sexp1, sexp2) of
 --     (_, Scons (Scons (Scons (Scons Ssym f (Scons Ssym x (Scons Ssym y Snil)))m)Snil)(Scons (Scons (Ssym f) (Scons a (Scons b Snil)))Snil)
 --     -> Lfix [(x, (s2l a)),(y,(s2l b))] s2l(m)
