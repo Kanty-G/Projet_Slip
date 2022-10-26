@@ -218,13 +218,17 @@ s2l (Scons sexp1 sexp2) =
         else if sexp1 ==Ssym "let"
         then
             case (sexp1,sexp2)of
-                (_, (Scons n m)) -> Lfix (s2l' [] n) (s2l m)
-
+                
+                -- (_, Scons (Scons x Snil) y) -> s2f (x y)
+                (_, Scons (Scons (Scons (Scons (Ssym f) (Scons (Ssym x) (Scons (Ssym y) Snil)))m)Snil)
+                    (Scons (Scons (Ssym g) (Scons a (Scons b Snil)))Snil))-> Lfix [(x, (s2l a)),(y,(s2l b))] (s2l m)
+                (_, (Scons m n)) -> Lfix (s2l' [] m) (s2l n)
+                
         else if sexp1 == Ssym "match"
-        then 
+        then
             case (sexp1, sexp2) of
-                --((_, Scons (Ssym "nil")(Scons (n) (Scons (Scons (Scons (Ssym "add") (Scons (Ssym x) (Scons (Ssym y) Snil)))m )t))))->Lmatch (s2l (Ssym "nil")) x y (s2l m)(s2l n) 
-                (_, Scons m (Scons n s))-> Lmatch (s2l m) ((matchSconsHandlerVar s)!!0) ((matchSconsHandlerVar s)!!1) (matchSconsHandlerLexp s)(s2l n)
+                (_, Scons m (Scons n s))-> Lmatch (s2l m) ((matchVarHandler s)!!0)
+                    ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
         else
 
             case (sexp1,sexp2)of
@@ -239,7 +243,7 @@ s2l (Scons sexp1 sexp2) =
 
                 --(Scons (Ssym "x") (Scons (Ssym "y") Snil))
 
-        
+
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
 
@@ -269,18 +273,29 @@ s2l'' (Scons sexp1 sexp2)=
         (_, Scons m Snil) -> Ladd(s2l'' sexp1)(s2l'' m)
         (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
+-- s2f :: Sexp -> Sexp -> Lexp
+-- s2f (Snum x)(Snum y)=  Lcall (Lnum x)(Lnum y)
+-- s2f x y =
+
+--     --(Scons (Scons (Ssym f) (Scons (Ssym x) (Scons (Ssym y) Snil)))m) : x
+--     --(Scons (Scons (Ssym g) (Scons a (Scons b Snil)))Snil) : y             Lfix [(x, (s2l a)),(y,(s2l b))] (s2l m)
+--     case (x, y) of
+--         (Scons(Scons _(Scons (Ssym x)(Scons (Ssym y)_)))z ,(Scons (Scons _(Scons a (Scons b _)))_) -> 
+
+
+
 --Fonction qui gère les lexp du Lmatch
-matchSconsHandlerLexp:: Sexp -> Lexp
-matchSconsHandlerLexp (Scons sexp1 sexp2) = 
+matchLexpHandler:: Sexp -> Lexp
+matchLexpHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
-                (Scons (Ssym "nil") _,y) -> matchSconsHandlerLexp y
+                (Scons (Ssym "nil") _,y) -> matchLexpHandler y
                 (Scons _ y, _) -> s2l y
 
 --Fonction qui gère les var du Lmatch
-matchSconsHandlerVar:: Sexp -> [Var]
-matchSconsHandlerVar (Scons sexp1 sexp2) = 
+matchVarHandler:: Sexp -> [Var]
+matchVarHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
-                (Scons (Ssym "nil") _,y) -> matchSconsHandlerVar y
+                (Scons (Ssym "nil") _,y) -> matchVarHandler y
                 (Scons (Scons _ (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
 
 ---------------------------------------------------------------------------
@@ -351,7 +366,7 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp)  --maybe [...(var:env)...]
+l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp)
 
 --Lfix [("f",Lcall (Lref "x") (Lref "y")),("*",Lcall (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1)) (Lref "y"))]
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
@@ -440,7 +455,13 @@ valOf = evalSexp . sexpOf
 main :: IO ()
 -- --(let ((* +) (/ -)) (* 5 (/ 3 1)))           
 
-main = print(lexpOf "(let (((f x y) (* (+ x 1) y))) (f 5 6)))")
+-- let 
+--     x = 6
+--     y = 5
+-- in
+--     (* (+ x 1) y)                       
+main = print(valOf "(let (((f x y) (* (+ x 1) y))) (f 5 6))")
 
---Lfix [("f",Lcall (Lref "x") (Lref "y")),("*",Lcall (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1)) (Lref "y"))]
--- (Lcall (Lcall (Lref "f") (Lnum 5)) (Lnum 6))
+
+-- Lfix [("x", Lnum 5),("y",Lnum6)] Lcall (Lcall (Lref "*") (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1))) (Lref "y")
+
