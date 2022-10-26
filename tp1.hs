@@ -291,7 +291,7 @@ matchVarHandler:: Sexp -> [Var]
 matchVarHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
                 (Scons (Ssym "nil") _,y) -> matchVarHandler y
-                (Scons (Scons _ (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
+                (Scons (Scons (Ssym"add") (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
