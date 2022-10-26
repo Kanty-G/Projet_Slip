@@ -227,7 +227,7 @@ s2l (Scons sexp1 sexp2) =
         else if sexp1 == Ssym "match"
         then
             case (sexp1, sexp2) of
-                (_, Scons m (Scons n s))-> Lmatch (s2l m) ((matchVarHandler s)!!0)
+                (_, Scons m (Scons (Scons (Ssym"nil") n) s))-> Lmatch (s2l m) ((matchVarHandler s)!!0)
                     ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
         else
 
@@ -410,14 +410,13 @@ eval env (Dfix dexpList dexp) =
     in
         eval expandEn dexp
 eval env (Dmatch dexp1 dexp2 dexp3)= 
-        case (dexp1,dexp3) of
-            (Dnil, Dcall Dnil n)-> eval env n
-            (Dcall Dnil _, Dcall Dnil n)-> eval env n
-            (Dadd m n,_)-> 
+        case (dexp1) of
+            (Dadd m n)-> 
                 let
-                    expandEnv =(eval env n):((eval env m):env)
+                    expandenv =eval env n:(eval env m:env)
                 in
-                   eval expandEnv dexp2
+                    eval expandenv dexp2
+            (_)->eval env dexp3
             
 
 
