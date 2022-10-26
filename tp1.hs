@@ -1,4 +1,3 @@
-
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
 
@@ -200,17 +199,16 @@ s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
-        if sexp1 ==Ssym "add" 
+        if sexp1 ==Ssym "add"
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
         else if sexp1 ==Ssym "list"
         then
             case (sexp1,sexp2)of
-                ( _, Scons m n) -> Ladd (s2l m) (s2l'' n)
 
+                (Ssym _, Scons m n) -> Ladd (s2l m) (s2l'' n)
 
-                
         else if sexp1 ==Ssym "fn"
         then
             case (sexp1,sexp2)of
@@ -221,7 +219,6 @@ s2l (Scons sexp1 sexp2) =
         then
             case (sexp1,sexp2)of
                 (_, (Scons n m)) -> Lfix (s2l' [] n) (s2l m)
-                 --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
 
         else if sexp1 == Ssym "match"
         then 
@@ -233,15 +230,16 @@ s2l (Scons sexp1 sexp2) =
             case (sexp1,sexp2)of
                 --cas pour Lcall
                 (_, Snil) -> s2l sexp1
-                (Ssym "nil", n)-> s2l n
                 (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
+                (Ssym n, Snum _) -> Lcall (Lref n)(s2l sexp2)
                 (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
                 (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
+                (_ ,Scons m Snil) -> Lcall (s2l sexp1) (s2l m)
                 (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
 
-                --Scons (Ssym "nil") (Scons (Snum 1) Snil)
+                --(Scons (Ssym "x") (Scons (Ssym "y") Snil))
 
-
+        
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
 
@@ -256,11 +254,10 @@ s2l' env (Ssym x) = []
 s2l' env (Scons (Ssym x) y) = (x, s2l y):env
 s2l' env (Scons sexp1 sexp2) =
     case (sexp1,sexp2) of
-
         ((Scons n m), (Scons x y))-> s2l' env (Scons n m) ++ s2l' env (Scons x y)
         ((Scons n m),_) -> s2l' env (Scons n m)
 
---Fonction qui gère la liste contenant plusieurs variables(nombres)
+--Fonction qui gère le cas récursif de la fonction list
 s2l'' :: Sexp -> Lexp
 s2l'' (Snum n) = Lnum n
 s2l'' (Ssym "nil") = Lnil
@@ -356,19 +353,20 @@ l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
 l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp)  --maybe [...(var:env)...]
 
+--Lfix [("f",Lcall (Lref "x") (Lref "y")),("*",Lcall (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1)) (Lref "y"))]
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
 lexpToDexp _ [] = []
 lexpToDexp env [x] = [l2d env x]
-lexpToDexp env (x:xs) = [(l2d env x)]++ lexpToDexp env xs
+lexpToDexp env (x:xs) = [l2d env x] ++ lexpToDexp env xs
 
 addEnv::[Var]->[Var]->[Var]
 addEnv [] env= env
-addEnv [x] env= (x):env
-addEnv (x:env2) env = (x):env++ (addEnv env2 env)
+addEnv [x] env= x:env
+addEnv (x:env2) env = x:env ++ addEnv env2 env
 
 
 indexOf ::(Eq a) => a -> [a] -> Int
-indexOf _ [] = error"empty list"
+indexOf _ [] = error "empty list"
 indexOf s (x:xs)
     | x == s = 0
     | otherwise = 1+indexOf s xs
@@ -440,10 +438,9 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(lexpOf "(match (add 1 2)(nil 1)(nil 2) ((add x y) (+ x y))) ")
---Scons (Ssym "match") = match 
- --(Scons (Ssym "nil") = nil
- --(Scons (Scons (Ssym "nil") (Scons (Snum 1) Snil)) = (nil 1)
- --(Scons (Scons (Scons (Ssym "add") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) =  ((add x y)
- -- (Scons (Scons (Ssym "+") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) Snil)) Snil))) =(+ x y)))
---Scons (Ssym "match") (Scons (Scons (Ssym "add") (Scons (Snum 1) (Scons (Snum 2) Snil))) (Scons (Scons (Ssym "nil") (Scons (Snum 1) Snil)) (Scons (Scons (Scons (Ssym "add") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) (Scons (Scons (Ssym "+") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) Snil)) Snil)))
+-- --(let ((* +) (/ -)) (* 5 (/ 3 1)))           
+
+main = print(lexpOf "(let (((f x y) (* (+ x 1) y))) (f 5 6)))")
+
+--Lfix [("f",Lcall (Lref "x") (Lref "y")),("*",Lcall (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1)) (Lref "y"))]
+-- (Lcall (Lcall (Lref "f") (Lnum 5)) (Lnum 6))
