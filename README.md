@@ -52,8 +52,11 @@ Nous avons fini par choisir la première  solution  car (nil 1) equivalent à �
 
 Le seul problème rencontré dans la fonction l2d est comment les var de l’expression lexp serait placé dans environnement.
 l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3)= ?
+
 1)Dmatch (l2d (var1:env) lexp1) (l2d (var2:env) lexp2) (l2d env lexp3)
+
 2)Dmatch (l2d env lexp1) (l2d (var1:(var2:env)) lexp2) (l2d env lexp3)
+
 3)Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)
 
 La première solution donnait une erreur car les variables ne sont pas reliés à lexp1, la deuxième solution donne une réponse car ces variables sont reliées à lexp2 mais les indexes ne sont pas placés dans le bon ordre  car au lieu de mettre d’abord var1 dans l’environnement c’est plutôt le var 2 qui est mis en premier avant var1, la troisième expression est la bonne elle met les var dans le bon ordre.
