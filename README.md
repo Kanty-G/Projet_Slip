@@ -39,7 +39,8 @@ Problèmes résolues:
 
 1)Match
 
-Match est une fonction qui branche uniquement sur les list (nil et add) telle que mentionné dans l’énoncé, 
+Match est une fonction qui branche uniquement sur les list (nil et add) telle que mentionné dans l’énoncé.
+
 Le problème rencontré avec le match est au niveau de son Lexp, au départ nous pensions que le lexp correspondant à (match nil (nil 1) ((add x y) (+ x y))) était Lmatch Lnil "x" "y" (Lnum 1) (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) mais en  posant des questions aux démonstreurs qui nous ont aidé avec la comprehension et référé à l’énoncé.
 En relisant l’énoncé nous avions pu trouver à quoi le lexp devrait ressembler.
 Le  (match e (nil en) ((add x xs) ec))  est Lmatch e x xs ec en, ainsi nous avons pensé à deux solutions :
