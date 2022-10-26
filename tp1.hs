@@ -273,15 +273,10 @@ s2l'' (Scons sexp1 sexp2)=
         (_, Scons m Snil) -> Ladd(s2l'' sexp1)(s2l'' m)
         (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
+--fonction qui gère le let avec un appel de fonction
 -- s2f :: Sexp -> Sexp -> Lexp
 -- s2f (Snum x)(Snum y)=  Lcall (Lnum x)(Lnum y)
--- s2f x y =
-
---     --(Scons (Scons (Ssym f) (Scons (Ssym x) (Scons (Ssym y) Snil)))m) : x
---     --(Scons (Scons (Ssym g) (Scons a (Scons b Snil)))Snil) : y             Lfix [(x, (s2l a)),(y,(s2l b))] (s2l m)
---     case (x, y) of
---         (Scons(Scons _(Scons (Ssym x)(Scons (Ssym y)_)))z ,(Scons (Scons _(Scons a (Scons b _)))_) -> 
-
+   
 
 
 --Fonction qui gère les lexp du Lmatch
@@ -461,7 +456,11 @@ main :: IO ()
 -- in
 --     (* (+ x 1) y)                       
 main = print(valOf "(let (((f x y) (* (+ x 1) y))) (f 5 6))")
+-- case (sexp1, sexp2) of
+--     (_, Scons (Scons (Scons (Scons Ssym f (Scons Ssym x (Scons Ssym y Snil)))m)Snil)(Scons (Scons (Ssym f) (Scons a (Scons b Snil)))Snil)
+--     -> Lfix [(x, (s2l a)),(y,(s2l b))] s2l(m)
 
 
 -- Lfix [("x", Lnum 5),("y",Lnum6)] Lcall (Lcall (Lref "*") (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1))) (Lref "y")
+
 
