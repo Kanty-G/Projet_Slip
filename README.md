@@ -34,3 +34,30 @@ D’une manière générale, on a travaillé en binôme pour faire tout le trava
 pour compléter le code, mais exceptionnelement quand on rencontrait un problème qui nous empêche d’avancer,
 chacune allait réfléchir de son côtté et on mettait nos id ́ees ensemble pour résoudre le problème et continuer.
 Après avoir lu et relu le pdf de l’énoncé, on a ciblé les points importants qui vont nous aider à faire le travail.
+
+Problèmes résolues: 
+
+1)Match
+
+Match est une fonction qui branche uniquement sur les list (nil et add) telle que mentionné dans l’énoncé, 
+Le problème rencontré avec le match est au niveau de son Lexp, au départ nous pensions que le lexp correspondant à (match nil (nil 1) ((add x y) (+ x y))) était Lmatch Lnil "x" "y" (Lnum 1) (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) mais en  posant des questions aux démonstreurs qui nous ont aidé avec la comprehension et référé à l’énoncé.
+En relisant l’énoncé nous avions pu trouver à quoi le lexp devrait ressembler.
+Le  (match e (nil en) ((add x xs) ec))  est Lmatch e x xs ec en, ainsi nous avons pensé à deux solutions :
+
+1)Lmatch Lnil "x" "y" (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) (Lnum 1) 
+2)Lmatch Lnil "x" "y" (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) (Lcall Lnil (Lnum 1))
+
+Nous avons fini par choisir la première  solution  car (nil 1) equivalent à “(nil en)” de (match e (nil en) ((add x xs) ec)) doit donner comme lexp (s2l en) donc (s2l 1) qui est Lnum 1 
+
+Le seul problème rencontré dans la fonction l2d est comment les var de l’expression lexp serait placé dans environnement.
+l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3)= ?
+1)Dmatch (l2d (var1:env) lexp1) (l2d (var2:env) lexp2) (l2d env lexp3)
+2)Dmatch (l2d env lexp1) (l2d (var1:(var2:env)) lexp2) (l2d env lexp3)
+3)Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)
+
+La première solution donnait une erreur car les variables ne sont pas reliés à lexp1, la deuxième solution donne une réponse car ces variables sont reliées à lexp2 mais les indexes ne sont pas placés dans le bon ordre  car au lieu de mettre d’abord var1 dans l’environnement c’est plutôt le var 2 qui est mis en premier avant var1, la troisième expression est la bonne elle met les var dans le bon ordre.
+
+Concernant l’évaluation nous n’avions eu aucun problème.
+
+La surprise rencontré dans cette étape est l’appelle de fonction contenant nil mais avec l’expression du match décrite dans l’énoncé les doutes ont été baillés .
+
