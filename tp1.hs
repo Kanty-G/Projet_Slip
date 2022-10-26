@@ -227,8 +227,10 @@ s2l (Scons sexp1 sexp2) =
         else if sexp1 == Ssym "match"
         then
             case (sexp1, sexp2) of
-                (_, Scons m (Scons (Scons (Ssym"nil") n) s))-> Lmatch (s2l m) ((matchVarHandler s)!!0)
-                    ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+                (_, Scons ((Scons (Ssym "add") m)) (Scons (Scons (Ssym"nil") n) s))-> Lmatch (s2l (Scons (Ssym "add") m)) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+                (_, Scons (Ssym"nil") (Scons (Scons (Ssym"nil") n) s))-> Lmatch (s2l (Ssym"nil")) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+                (_, Scons ((Scons (Ssym "nil") m)) (Scons (Scons (Ssym"nil") n) s))-> Lmatch (s2l (Scons (Ssym "nil") m)) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+                (_,_)-> error"match est uniquement utilisé sur add et nil"
         else
 
             case (sexp1,sexp2)of
