@@ -1,3 +1,4 @@
+
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
 
@@ -199,16 +200,17 @@ s2l Snil = Lnil
 s2l (Ssym s) = Lref s
 -- ¡¡ COMPLETER !!
 s2l (Scons sexp1 sexp2) =
-        if sexp1 ==Ssym "add"
+        if sexp1 ==Ssym "add" 
         then
             case (sexp1,sexp2)of
                 (Ssym _, Scons m n) -> Ladd (s2l m) (s2l n)
         else if sexp1 ==Ssym "list"
         then
             case (sexp1,sexp2)of
+                ( _, Scons m n) -> Ladd (s2l m) (s2l'' n)
 
-                (Ssym _, Scons m n) -> Ladd (s2l m) (s2l'' n)
 
+                
         else if sexp1 ==Ssym "fn"
         then
             case (sexp1,sexp2)of
@@ -219,15 +221,19 @@ s2l (Scons sexp1 sexp2) =
         then
             case (sexp1,sexp2)of
                 (_, (Scons n m)) -> Lfix (s2l' [] n) (s2l m)
-        --         --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
+                 --(_, (Scons (Scons(Scons (Ssym x) y) (Scons ( Scons (Ssym t) z) _)) n)) -> Lfix [(x, (s2l y)),(t,(s2l z))] (s2l n)
 
-
-
+        else if sexp1 == Ssym "match"
+        then 
+            case (sexp1, sexp2) of
+                --((_, Scons (Ssym "nil")(Scons (n) (Scons (Scons (Scons (Ssym "add") (Scons (Ssym x) (Scons (Ssym y) Snil)))m )t))))->Lmatch (s2l (Ssym "nil")) x y (s2l m)(s2l n) 
+                (_, Scons m (Scons n s))-> Lmatch (s2l m) ((matchSconsHandlerVar s)!!0) ((matchSconsHandlerVar s)!!1) (matchSconsHandlerLexp s)(s2l n)
         else
 
             case (sexp1,sexp2)of
                 --cas pour Lcall
                 (_, Snil) -> s2l sexp1
+                (Ssym "nil", n)-> s2l n
                 (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
                 (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
                 (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
@@ -254,10 +260,7 @@ s2l' env (Scons sexp1 sexp2) =
         ((Scons n m), (Scons x y))-> s2l' env (Scons n m) ++ s2l' env (Scons x y)
         ((Scons n m),_) -> s2l' env (Scons n m)
 
---Fonction qui gère le cas récursif de la fonction list
-
---Ladd (Lnum 1) (Ladd (Lnum 2) (Lnum 3))
-
+--Fonction qui gère la liste contenant plusieurs variables(nombres)
 s2l'' :: Sexp -> Lexp
 s2l'' (Snum n) = Lnum n
 s2l'' (Ssym "nil") = Lnil
@@ -269,8 +272,19 @@ s2l'' (Scons sexp1 sexp2)=
         (_, Scons m Snil) -> Ladd(s2l'' sexp1)(s2l'' m)
         (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
---Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) Snil))
+--Fonction qui gère les lexp du Lmatch
+matchSconsHandlerLexp:: Sexp -> Lexp
+matchSconsHandlerLexp (Scons sexp1 sexp2) = 
+            case (sexp1,sexp2) of
+                (Scons (Ssym "nil") _,y) -> matchSconsHandlerLexp y
+                (Scons _ y, _) -> s2l y
 
+--Fonction qui gère les var du Lmatch
+matchSconsHandlerVar:: Sexp -> [Var]
+matchSconsHandlerVar (Scons sexp1 sexp2) = 
+            case (sexp1,sexp2) of
+                (Scons (Ssym "nil") _,y) -> matchSconsHandlerVar y
+                (Scons (Scons _ (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
@@ -426,4 +440,10 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
-main = print(valOf "(list 1 nil)")
+main = print(lexpOf "(match (add 1 2)(nil 1)(nil 2) ((add x y) (+ x y))) ")
+--Scons (Ssym "match") = match 
+ --(Scons (Ssym "nil") = nil
+ --(Scons (Scons (Ssym "nil") (Scons (Snum 1) Snil)) = (nil 1)
+ --(Scons (Scons (Scons (Ssym "add") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) =  ((add x y)
+ -- (Scons (Scons (Ssym "+") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) Snil)) Snil))) =(+ x y)))
+--Scons (Ssym "match") (Scons (Scons (Ssym "add") (Scons (Snum 1) (Scons (Snum 2) Snil))) (Scons (Scons (Ssym "nil") (Scons (Snum 1) Snil)) (Scons (Scons (Scons (Ssym "add") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) (Scons (Scons (Ssym "+") (Scons (Ssym "x") (Scons (Ssym "y") Snil))) Snil)) Snil)))
