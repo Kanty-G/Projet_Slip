@@ -9,7 +9,7 @@
 \usepackage{hyperref}
 
 \title{Travail pratique 1 IFT2035}
-\author{Kanty Louange Gakima, matricule : 20184109 \\ Marianne Shimt Pemmerl, matricule: }
+\author{Kanty Louange Gakima, matricule : 20184109 \\ Marianne Schmit Pemmerl, matricule:20192143 }
 
 \begin{document}
 
@@ -35,7 +35,7 @@
 
 
 Comme indiqué dans l'énoncé du devoir. Ce travail vise à améliorer notre compréhension des langages fonctionnels en utilisant le langage Haskell pour compléter le code qui implémente un interprète d'un langage de programmation fonctionnel Slip.\\ 
-Dans ce rapport, on va parler principalement de la méthodologie utilisée pour comprendre l'énoncé et compléter le code. Mais aussi on va parler des problèmes rencontrées et les différentes manières qu'on a utilisé pour les résoudre.
+Dans ce rapport, Nous allons parler de la méthodologie utilisée pour comprendre l'énoncé et compléter le code. Mais également des problèmes rencontrées et les différentes manières qu'on a utilisé pour les résoudre.
 
 \section{Méthode utilisée}
 D'une manière générale on a travaillé en binôme pour faire tout le travail tel que conseillé, que ce soit pour la compréhension et pour compléter le code. Mais exceptionnelement quand on rencontrait un problème qui nous empêche d'avancer, chacune allait réfléchir de son côté et on mettait nos idées ensemble pour résoudre le problème et continuer.\\
@@ -55,7 +55,7 @@ En résumé ,on dirait que la méthode de compléter s2l, l2d et eval en largeur
 
 \begin{enumerate}
     \item 
-    \textbf{Construction de listes:}\\
+    \textbf{1.Constructeurs de listes:}\\
     Dans le langage fonctionnel slip les listes sont construits avec le mot clé add ou list ou encore nil pour les listes vides.\\
     Ici, au début on croyait que la syntaxe d'une liste est la même, qu'elle soit construite avec "add" ou "list". C'est après avoir testé d'autres exemples et relu encore une fois notre ami l'énoncé , qu'on a compris qu'il y avait un problème.\\
     Exemples:\\
@@ -77,17 +77,39 @@ En résumé ,on dirait que la méthode de compléter s2l, l2d et eval en largeur
     Pour résoudre ce problème, on a créé une fonction auxiliaire\\
     s2l'' :: Sexp -> Lexp, qui va permettre de faire la récursion quand on a plusieurs arguments, et la récursion pour une liste construite avec "add", sera gérée dans s2l.
     
-    Lors de la fonction l2d et eval,les deux peuvent être gérés de la même manière sans devoir distinguer les deux cas.
+    Lors de la fonction l2d et eval,les deux peuvent être gérés de la même manière sans devoir distinguer les deux cas.\\
+    \\
+     \textbf{2.Appel de fonction(Call) et définition de fonction(Lambda):}\\ 
+    \\
+    Nous n’avions pas rencontré de problème particulier avec l’appel de fonction(call) qui s’est fait rapidement grâce à la compréhension des précédentes démo faites en classe.\\
+    
+    Concernant la définition de fonctions (Lambda) le s2l et eval se sont aussi fait rapidement, le seul problème a été au niveau du l2d où les variables ne sont pas représentées par les chaînes de caractères mais plutôt par les indexes de  “de Bruijn” , afin de gérer cela nous avons dû créer une fonction indexOf qui nous permettrait de trouver l’index des ces variables dans l’environnement \\
+    \\
+    
+    \textbf{3.Match:}\\
+    Match est une fonction qui branche uniquement sur les list (nil et add) telle que mentionné dans l’énoncé.\\
+    Le premier problème rencontré avec le match est au niveau de son Lexp, au départ nous pensions que le lexp correspondant à (match nil (nil 1) ((add x y) (+ x y))) était Lmatch Lnil "x" "y" (Lnum 1) (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) mais en posant des questions aux démonstreurs qui nous ont aidé avec la compréhension et en relisant l’énoncé nous avions pu trouver à quoi le lexp devrait ressembler.\\
+    Le (match e (nil en) ((add x xs) ec)) est Lmatch e x xs ec en, ainsi nous avons pensé à deux solutions :\\
+    \\
+    1)Lmatch Lnil "x" "y" (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) (Lnum 1)\\
+    2)Lmatch Lnil "x" "y" (Lcall (Lcall (Lref "+") (Lref "x")) (Lref "y")) (Lcall Lnil (Lnum 1))\\
+    Nous avons fini par choisir la première solution car (nil 1) équivaut à “(nil en)” de (match e (nil en) ((add x xs) ec)) doit donner comme lexp (s2l en) donc (s2l 1) qui est Lnum 1\\
+    \\
+    Le seul problème rencontré dans la fonction l2d est comment les var de l’expression lexp serait placé dans environnement.\\
+    \\ l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3)= ?\\
+    1)Dmatch (l2d (var1:env) lexp1) (l2d (var2:env) lexp2) (l2d env lexp3)\\
+    2)Dmatch (l2d env lexp1) (l2d (var1:(var2:env)) lexp2) (l2d env lexp3)\\
+    3)Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)\\ \\
+    La première solution donnait une erreur car les variables ne sont pas reliés à lexp1, la deuxième solution donne une réponse car ces variables sont reliées à lexp2 mais les indexes ne sont pas placés dans le bon ordre car au lieu de mettre d’abord var1 dans l’environnement c’est plutôt le var 2 qui est mis en premier avant var1, la troisième expression est la bonne elle met les var dans le bon ordre.\\ \\
+    Concernant l’évaluation nous n’avions eu aucun problème.\\
+    La surprise rencontré dans cette étape est l’appelle de fonction contenant nil mais avec l’expression du match décrite dans l’énoncé les doutes ont été balayer .\\ \\
+    
+
+
+    
+    
     
 \end{enumerate}
-
-\begin{enumerate}
-    \item 
-    \textbf{Problèmes avec match}\\
-
-\end{enumerate}
-
-
 
 
 \end{document}
