@@ -66,5 +66,5 @@ La première solution donnait une erreur car les variables ne sont pas reliés �
 
 Concernant l’évaluation nous n’avions eu aucun problème.
 
-La surprise rencontré dans cette étape est l’appelle de fonction contenant nil mais avec l’expression du match décrite dans l’énoncé les doutes ont été baillés .
+La surprise rencontré dans cette étape est l’appelle de fonction contenant nil mais avec l’expression du match décrite dans l’énoncé les doutes ont été balayer  .
 
