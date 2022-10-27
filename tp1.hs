@@ -279,14 +279,19 @@ s2f :: Env2 ->  Sexp -> Env2
 s2f env (Snil) = []
 s2f env (Snum n) = []
 s2f env (Ssym x) = []
+s2f env (Scons (Ssym x) y) = (x, s2l y):env
 s2f env (Scons sexp1 sexp2) =
     case (sexp1, sexp2)of
+      
+        ( Ssym m,Snum n) -> s2f env (Scons sexp1 sexp2)
+        (Scons (Ssym m) Snil ,Scons (Snum n) Snil) -> s2f env(Scons (Ssym m) (Snum n))
         ((Scons (Ssym f) (Scons x y)),((Scons (Scons (Ssym g) (Scons a b))_))) ->
             if (Ssym f == Ssym g)
             then
-                s2l' env (Scons x a) ++ s2l' env (Scons y b)
+                s2f env (Scons x a) ++ s2f env (Scons y b)
             else 
                 error  "Error in let"
+        
 
 
 
