@@ -218,12 +218,11 @@ s2l (Scons sexp1 sexp2) =
         else if sexp1 ==Ssym "let"
         then
             case (sexp1,sexp2)of
-                
+
                 -- (_, Scons (Scons x Snil) y) -> s2f (x y)
-                (_, Scons (Scons (Scons (Scons (Ssym f) (Scons (Ssym x) (Scons (Ssym y) Snil)))m)Snil)
-                    (Scons (Scons (Ssym g) (Scons a (Scons b Snil)))Snil))-> Lfix [(x, (s2l a)),(y,(s2l b))] (s2l m)
+                (_, Scons (Scons (Scons m n)_)(Scons x _)) -> Lfix(s2f[](Scons m x))(s2l n)
                 (_, (Scons m n)) -> Lfix (s2l' [] m) (s2l n)
-                
+
         else if sexp1 == Ssym "match"
         then
             case (sexp1, sexp2) of
@@ -276,10 +275,31 @@ s2l'' (Scons sexp1 sexp2)=
         (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
 --fonction qui gère le let avec un appel de fonction
--- s2f :: Sexp -> Sexp -> Lexp
--- s2f (Snum x)(Snum y)=  Lcall (Lnum x)(Lnum y)
-   
+s2f :: Env2 ->  Sexp -> Env2
+s2f env (Snil) = []
+s2f env (Snum n) = []
+s2f env (Ssym x) = []
+s2f env (Scons sexp1 sexp2) =
+    case (sexp1, sexp2)of
+        ((Scons (Ssym f) (Scons x y)),((Scons (Scons (Ssym g) (Scons a b))_))) ->
+            if (Ssym f == Ssym g)
+            then
+                s2l' env (Scons x a) ++ s2l' env (Scons y b)
+            else 
+                error  "Error in let"
 
+
+
+--m =(Scons (Ssym "f") (Scons (Ssym "x")(Scons (Ssym "y") Snil)))
+--n = 
+--x = (Scons (Scons (Ssym "f") (Scons (Snum 5) (Scons (Snum 6) Snil))) Snil)
+-- (Scons (Ssym "y") Snil)))
+--(_, Scons (Scons (Scons m n)_)(Scons x _)) -> s2f(Scons m x) n
+
+--Scons (Ssym "let") (Scons (Scons (Scons (Scons (Ssym "f") (Scons (Ssym "x")
+-- (Scons (Ssym "y") Snil))) (Scons (Scons (Ssym "*") (Scons (Scons (Ssym "+") 
+--(Scons (Ssym "x") (Scons (Snum 1) Snil))) (Scons (Ssym "y") Snil))) Snil)) Snil) 
+--(Scons (Scons (Ssym "f") (Scons (Snum 5) (Scons (Snum 6) Snil))) Snil))
 
 --Fonction qui gère les lexp du Lmatch
 matchLexpHandler:: Sexp -> Lexp
@@ -363,10 +383,11 @@ l2d env (Lref s) = Dref(indexOf s (env))
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp)
+l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2)env) lexp)
 l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3)= Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)
 
---Lfix [("f",Lcall (Lref "x") (Lref "y")),("*",Lcall (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1)) (Lref "y"))]
+--Lfix [("*",Lref "+"),("/",Lref "-")] (Lcall (Lcall (Lref "*") (Lnum 5)) (Lcall (Lcall (Lref "/") (Lnum 3)) (Lnum 1)))
+--Dfix [Dref 0,Dref 3] (Dcall (Dcall (Dref 0) (Dnum 5)) (Dcall (Dcall (Dref 3) (Dnum 3)) (Dnum 1)))
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
 lexpToDexp _ [] = []
 lexpToDexp env [x] = [l2d env x]
@@ -374,8 +395,8 @@ lexpToDexp env (x:xs) = [l2d env x] ++ lexpToDexp env xs
 
 addEnv::[Var]->[Var]->[Var]
 addEnv [] env= env
-addEnv [x] env= x:env
-addEnv (x:env2) env = x:env ++ addEnv env2 env
+addEnv [x] env = x:env
+addEnv (x:xs) env = x:env ++ addEnv xs env
 
 
 indexOf ::(Eq a) => a -> [a] -> Int
@@ -411,15 +432,15 @@ eval env (Dfix dexpList dexp) =
         expandEn= expandEnv env dexpList
     in
         eval expandEn dexp
-eval env (Dmatch dexp1 dexp2 dexp3)= 
+eval env (Dmatch dexp1 dexp2 dexp3)=
         case (dexp1) of
-            (Dadd m n)-> 
+            (Dadd m n)->
                 let
                     expandenv =eval env n:(eval env m:env)
                 in
                     eval expandenv dexp2
             (_)->eval env dexp3
-            
+
 
 
 --fonction pour évaluer la liste des dexp
@@ -459,19 +480,5 @@ valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
 main :: IO ()
--- --(let ((* +) (/ -)) (* 5 (/ 3 1)))           
 
--- let 
---     x = 6
---     y = 5
--- in
---     (* (+ x 1) y)                       
-main = print(valOf "(match (add 1 2) (nil 1) ((add x y) (+ x y)))")
--- case (sexp1, sexp2) of
---     (_, Scons (Scons (Scons (Scons Ssym f (Scons Ssym x (Scons Ssym y Snil)))m)Snil)(Scons (Scons (Ssym f) (Scons a (Scons b Snil)))Snil)
---     -> Lfix [(x, (s2l a)),(y,(s2l b))] s2l(m)
-
-
--- Lfix [("x", Lnum 5),("y",Lnum6)] Lcall (Lcall (Lref "*") (Lcall (Lcall (Lref "+") (Lref "x")) (Lnum 1))) (Lref "y")
-
-
+main = print(lexpOf"(let (((f x y) (* (+ x 1) y)))(f 5 6))") 
