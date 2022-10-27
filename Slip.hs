@@ -345,6 +345,7 @@ addEnv [] env= env
 addEnv [x] env= x:env
 addEnv (x:env2) env = x:env ++ addEnv env2 env
 
+--permet de trouver les index des variables dans l'environnement
 indexOf ::(Eq a) => a -> [a] -> Int
 indexOf _ [] = error"empty list"
 indexOf s (x:xs)
