@@ -1,3 +1,6 @@
+ --Auteur: Kanty Louange Gakima, matricule : 20184109 
+ --Auteur : Marianne Schmit Pemmerl, matricule:20192143
+ 
  --- Implantation d'une sorte de Lisp          -*- coding: utf-8 -*-
 {-# OPTIONS_GHC -Wall #-}
 
