@@ -204,12 +204,21 @@ s2l (Scons sexp1 sexp2) =
             (Ssym "list",Scons m n) -> Ladd (s2l m) (s2l'' n)
             (Ssym "fn", Scons (Scons (Ssym x) Snil) (Scons n Snil)) ->Llambda x (s2l n)
             (Ssym "let",Scons n m) -> Lfix (s2l' [] n) (s2l m)
+            (Ssym "match",Scons ((Scons (Ssym "add") m)) (Scons (Scons (Ssym"nil") n) s))->
+                Lmatch (s2l (Scons (Ssym "add") m)) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+            (Ssym "match", Scons (Ssym"nil") (Scons (Scons (Ssym"nil") n) s) )->
+                Lmatch (s2l (Ssym"nil")) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+            (Ssym "match", Scons ((Scons (Ssym "nil") m)) (Scons (Scons (Ssym"nil") n) s ))->
+                Lmatch (s2l (Scons (Ssym "nil") m)) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+            (Ssym "match", _) ->error"match est uniquement utilisé sur add et nil"
             (_, Snil) -> s2l sexp1
             (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
             (Ssym n, Snum _) -> Lcall (Lref n)(s2l sexp2)
             (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
             (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
+            (_ ,Scons m Snil) -> Lcall (s2l sexp1) (s2l m)
             (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
+            (_,_)-> error"erreur dans votre expression cas non existant dans slip"
 
 s2l se = error ("Malformed Sexp: " ++ showSexp se)
 
@@ -225,7 +234,7 @@ s2l' env1 (Scons sexp1 sexp2) =
         (Scons n m, Scons x y)-> s2l' env1 (Scons n m) ++ s2l' env1 (Scons x y)
         (Scons n m,_) -> s2l' env1 (Scons n m)
 
---fonction qui gère la récursion dans les listes d
+--fonction qui gère la recursion de list lorsqu'on a plusieurs arguments
 s2l'' :: Sexp -> Lexp
 s2l'' (Snum n) = Lnum n
 s2l'' (Ssym "nil") = Lnil
@@ -237,6 +246,19 @@ s2l'' (Scons sexp1 sexp2)=
         (_, Scons m Snil) -> Ladd(s2l'' sexp1)(s2l'' m)
         (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
+--Fonction qui permet de gérer les lexp du Lmatch
+matchLexpHandler:: Sexp -> Lexp
+matchLexpHandler (Scons sexp1 sexp2) =
+            case (sexp1,sexp2) of
+                (Scons (Ssym "nil") _,y) -> matchLexpHandler y
+                (Scons _ y, _) -> s2l y
+
+--Fonction qui gère les var du Lmatch
+matchVarHandler:: Sexp -> [Var]
+matchVarHandler (Scons sexp1 sexp2) =
+            case (sexp1,sexp2) of
+                (Scons (Ssym "nil") _,y) -> matchVarHandler y
+                (Scons (Scons (Ssym"add") (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
@@ -305,6 +327,7 @@ l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
 l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp) 
+l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3)= Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)
 
 --fonction qui passe d'une liste de Lexp à une liste de dexp
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
@@ -349,9 +372,17 @@ eval env (Dfix dexpList dexp) =
     
     in
         eval env2 dexp
+eval env (Dmatch dexp1 dexp2 dexp3)= 
+        case dexp1 of
+            (Dadd m n)-> 
+                let
+                    expandenv =eval env n:(eval env m:env)
+                in
+                    eval expandenv dexp2
+            _->eval env dexp3
 
 
---fonction pour évaluer la liste des dexp
+--fonction qui traduit la liste des dexp en liste de Value
 expandEnv::[Value]->[Dexp]->[Value]
 expandEnv _ [] = []
 expandEnv env [x]= (eval env x):env
@@ -388,4 +419,4 @@ valOf = evalSexp . sexpOf
 
 main :: IO ()
 
-main = print(lexpOf "(let ((* +) (/ -)) (* 5 (/ 3 1))))")
+main = print(valOf "(match nil (nil 1) ((add x y) (+ x y)))")
