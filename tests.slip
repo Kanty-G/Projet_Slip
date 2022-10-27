@@ -7,6 +7,7 @@
 (((fn (x) (fn (y) (* ( - 7 x) y)))8)4) ; -4
 (add nil nil) ; [[]]
 (add nil 2) ; [[] . 2]
+(add 7 (add 1 nil)) ; [7 1]
 (add(add (add 5 1) 6)7) ; [[[5 . 1] . 6] . 7]
 (list 1 2 3 4) ; [1 2 3 . 4]
 (list 1 2 3 4 nil) ;[1 2 3 4]
