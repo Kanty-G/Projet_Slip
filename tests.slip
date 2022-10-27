@@ -1,5 +1,9 @@
 
-;;Quelques tests          -*- mode: lisp-data; coding: utf-8 -*-
+;; --Auteur : Marianne Schmit Pemmerl, matricule:20192143
+;; --Auteur: Kanty Louange Gakima, matricule : 20184109 
+
+ 
+;;;Quelques tests          -*- mode: lisp-data; coding: utf-8 -*-
 2                                       ; ↝ 2
 +                                       ; ↝ <function>
 (+ 2 4)                                 ; ↝ 6
