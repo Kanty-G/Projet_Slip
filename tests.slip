@@ -1,0 +1,22 @@
+;;Quelques tests
+-10 ; -10
+* ; <function>
+(*(+ (+ 9 2) (- 1 7)) 3) ;15
+(*(/ 9 2) 3) ; 12
+((fn (-) -) (+ 4 7))  ;; 11
+(((fn (x) (fn (y) (* ( - 7 x) y)))8)4) ; -4
+(add nil nil) ; [[]]
+(add nil 2) ; [[] . 2]
+(add(add (add 5 1) 6)7) ; [[[5 . 1] . 6] . 7]
+(list 1 2 3 4) ; [1 2 3 . 4]
+(list 1 2 3 4 nil) ;[1 2 3 4]
+(list nil nil) ; [[] []]
+(list 1 nil) ; [1 []]
+(let ((y +) (x -)( z 9)) (y 5 (x z 1))) ; 13
+(let ((/ nil)) /) ; []
+(let ((/ 8) (x 3)) (* / x)) ; 24
+(let ((y +) (x -)) (y 5 (x 3 1))) ;7
+(match nil (nil 1) nil );1
+(match (add 7 2) (nil 0) ((add / -) (+ / -))) ; 9
+(match (add nil 4) (nil 0) ((add 0 nil) 7) ((add x nil) x)) ;7
+(match (add 7 9) (nil 1) (nil 3) (add 1 0) ((add x y) (* x y))) ;63
