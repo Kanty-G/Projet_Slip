@@ -202,20 +202,28 @@ s2l (Scons sexp1 sexp2) =
         case (sexp1,sexp2)of
             (Ssym "add", Scons m n) -> Ladd (s2l m) (s2l n)
             (Ssym "list",Scons m n) -> Ladd (s2l m) (s2l'' n)
-            (Ssym "fn", Scons (Scons (Ssym x) Snil) (Scons n Snil)) ->Llambda x (s2l n)
+            (Ssym "fn", Scons (Scons (Ssym x) Snil) (Scons n Snil))->
+                 Llambda x (s2l n)
             (Ssym "let",Scons n m) -> Lfix (s2l' [] n) (s2l m)
-            (Ssym "match",Scons ((Scons (Ssym "add") m)) (Scons (Scons (Ssym"nil") n) s))->
-                Lmatch (s2l (Scons (Ssym "add") m)) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+
+            (Ssym "match",Scons ((Scons (Ssym "add") m))
+                (Scons (Scons (Ssym"nil") n) s) )-> 
+                    Lmatch (s2l (Scons (Ssym "add") m))(matchVarHandler s!!0)
+                    (matchVarHandler s!!1) (matchLexpHandler s)(s2l n)
             (Ssym "match", Scons (Ssym"nil") (Scons (Scons (Ssym"nil") n) s) )->
-                Lmatch (s2l (Ssym"nil")) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
-            (Ssym "match", Scons ((Scons (Ssym "nil") m)) (Scons (Scons (Ssym"nil") n) s ))->
-                Lmatch (s2l (Scons (Ssym "nil") m)) ((matchVarHandler s)!!0) ((matchVarHandler s)!!1) (matchLexpHandler s)(s2l n)
+                Lmatch (s2l (Ssym"nil")) (matchVarHandler s!!0) 
+                    (matchVarHandler s!!1)(matchLexpHandler s)(s2l n)
+            (Ssym "match", Scons ((Scons (Ssym "nil") m))
+                 (Scons (Scons (Ssym"nil") n) s )) -> 
+                    Lmatch (s2l (Scons (Ssym "nil") m)) (matchVarHandler s!!0) 
+                        (matchVarHandler s!!1)(matchLexpHandler s)(s2l n)
             (Ssym "match", _) ->error"match est uniquement utilisé sur add et nil"
+
             (_, Snil) -> s2l sexp1
             (Snum n, Snum m) -> Lcall (Lnum n)(Lnum m)
             (Ssym n, Snum _) -> Lcall (Lref n)(s2l sexp2)
             (_, Scons (Snum n) Snil) -> Lcall (s2l sexp1) (Lnum n)
-            (_, Scons (Snum n) (Snum m)) -> Lcall (Lcall (s2l sexp1)(Lnum n)) (Lnum m)
+            (_, Scons (Snum n) (Snum m)) -> Lcall(Lcall(s2l sexp1)(Lnum n))(Lnum m)
             (_ ,Scons m Snil) -> Lcall (s2l sexp1) (s2l m)
             (_, Scons v1 v2) -> Lcall (Lcall(s2l sexp1)(s2l v1))(s2l v2)
             (_,_)-> error"erreur dans votre expression cas non existant dans slip"
@@ -262,7 +270,8 @@ matchVarHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
                 (Scons (Ssym "nil") _,y) -> matchVarHandler y
                 (Scons (Ssym "add") _,y) -> matchVarHandler y
-                (Scons (Scons (Ssym "add") (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
+                (Scons (Scons (Ssym "add") 
+                    (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
@@ -330,8 +339,10 @@ l2d env (Lref s) = Dref(indexOf s env)
 l2d env(Llambda var lexp) = Dlambda(l2d (var:env) lexp)
 l2d env(Lcall lexp1 lexp2) = Dcall(l2d env lexp1) (l2d env lexp2)
 l2d env(Ladd lexp1 lexp2) =Dadd(l2d ("add":env) lexp1) (l2d env lexp2)
-l2d env(Lfix env2 lexp) = Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp) 
-l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3)= Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)
+l2d env(Lfix env2 lexp) = 
+    Dfix (lexpToDexp env (map snd env2))(l2d (addEnv (map fst env2) env) lexp)
+l2d env(Lmatch lexp1 var1 var2 lexp2 lexp3) = 
+    Dmatch (l2d env lexp1) (l2d (var2:(var1:env)) lexp2) (l2d env lexp3)
 
 --fonction qui passe d'une liste de Lexp à une liste de dexp
 lexpToDexp:: [Var] ->[Lexp]  -> [Dexp]
@@ -374,12 +385,11 @@ eval env (Dadd dexp1 dexp2) = Vcons(eval env dexp1)(eval env dexp2)
 eval env (Dfix dexpList dexp) =
     let
         env2 = expandEnv  env dexpList
-    
     in
         eval env2 dexp
-eval env (Dmatch dexp1 dexp2 dexp3)= 
+eval env (Dmatch dexp1 dexp2 dexp3)=
         case dexp1 of
-            (Dadd m n)-> 
+            (Dadd m n)->
                 let
                     expandenv =eval env n:(eval env m:env)
                 in
@@ -422,6 +432,4 @@ dexpOf = l2d (map fst env0) . s2l . sexpOf
 valOf :: String -> Value
 valOf = evalSexp . sexpOf
 
-main :: IO ()
 
-main = print(valOf "(match (add 1 2) (nil 1) ((add x y) (+ x y)))")
