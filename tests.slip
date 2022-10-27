@@ -19,52 +19,57 @@
 (match nil (nil 1) ((add x y) (+ x y)))       ; ↝ 1
 
 
-;(let (((f x y) (* (+ x 1) y))) (f 5 6))  ; ↝ 36
-;Ce dernier exemple ne passe pas car on a des problèmes au niveau du cas 
-;de déclaration de fonctions, on a pas eu le temps de pouvoir bien 
+;Ce dernier exemple du fichier exemples.slip ne passe pas car on a des problèmes  
+;au niveau du cas de déclaration de fonctions, on a pas eu le temps de pouvoir bien 
 ;finaliser ce cas, donc il est mis en commentaire pour permettre 
-;l'éxecution d'autres tes
+;l'éxecution des autres tests
+;(let (((f x y) (* (+ x 1) y))) (f 5 6))  ; ↝ 36
 
-(let ((* +) (/ -)) (* 5 (/ 3 1)))       ; ↝ 7 
-;l'ambiguité sur la déclaration des variables avec les opérations
-;crée une ambiguité avec les vraies opérations ceci ne nous donne 
+
+;l'ambiguité des variables avec les opérations
+;crée une confusion avec les vraies opérations ceci ne nous donne 
 ;donc pas le résultat attendu , ça nous donne 8
+(let ((* +) (/ -)) (* 5 (/ 3 1)))       ; ↝ 7 
 
-
-(let ((y +) (x -)) (y 5 (x 3 1))) ; 7  
 ;essaie du test précédent qui marche mais avec comme déclaration de 
 ;variable autre chose que les opérations définies.
+(let ((y +) (x -)) (y 5 (x 3 1))) ; 7  
+
 
 (*(+ (+ 9 2) (- 1 7)) 3)     ;15 test sur l'appel de plusieurs fonctions
 
-((fn (-) -) (+ 4 7))         ;; 11 
 ;tester si la variable de référence de la définition de fonction peut
 ;etre une opération
+((fn (-) -) (+ 4 7))         ;; 11 
 
+;comparer le resultat de list et add avec les memes arguments pour voir s'il donne 
+;la meme chose
 (add nil nil)   ; [[]]
 (list nil nil)  ; [[] []] 
-;comparer list et add avec les memes arguments pour voir s'il donne 
-;la meme chose
 
+;list avec un nil a la fin et l'autre sans, pour s'assurer qu'ils 
+;sont différents
 (list 1 2 3 4)      ; [1 2 3 . 4]
 (list 1 2 3 4 nil)  ;[1 2 3 4] 
-;list avec un nil a la fin et l'autre sans, pour s'assurer qu'ils 
-;ne donnent pas le meme resultat
 
+;list[7 9] donne le meme resultat que (add 7 (add 9 nil))
 (add 7 (add 9 nil))   ; [7 9]
 (list 7 9)            ; [7 9]
-;list[7 9] donne le meme resultat que (add 7 (add 9 nil))
 
+;;quelques tests en plus sur add
 (add nil 2)                ; [[] . 2]
 (add(add (add 5 1) 6)7)    ; [[[5 . 1] . 6] . 7]
 
+
 (let ((y +) (x -)( z 9)) (y 5 (x z 1))) ; 13
 
+;essaie d'une opération(+ * _ /) comme étant une déclaration de variable
 (let ((/ 8) (x 3)) (* / x)) ; 24 
-;sur une opération comme étant une déclaration de variable
 
-(match (add 7 2) (nil 0) ((add / -) (+ / -))) ; 9 
+
 ;les opértaions - + / * peuvent etre considéré comme des variables 
+(match (add 7 2) (nil 0) ((add / -) (+ / -))) ; 9 
 
-(match (add nil 4) (nil 0) (add 5 6) (nil 2) ((add 0 nil) 7) ((add x nil) x)) ;7 
 ;test sur l'ajout de plusieurs appel de fonction
+(match (add nil 4) (nil 0) (add 5 6) (nil 2) ((add 0 nil) 7) ((add x nil) x)) ;7 
+
