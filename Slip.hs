@@ -246,7 +246,8 @@ s2l'' (Scons sexp1 sexp2)=
         (_, Scons m Snil) -> Ladd(s2l'' sexp1)(s2l'' m)
         (_,_)->Ladd(s2l'' sexp1)(s2l'' sexp2)
 
---Fonction qui permet de gérer les lexp du Lmatch
+--Fonction qui récupère le ec de l'expression
+-- (match e (nil en) ((add x xs) ec)) et le retourne
 matchLexpHandler:: Sexp -> Lexp
 matchLexpHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
@@ -254,7 +255,8 @@ matchLexpHandler (Scons sexp1 sexp2) =
                 (Scons (Ssym "add") _,y) -> matchLexpHandler y
                 (Scons _ y, _) -> s2l y
 
---Fonction qui gère les var du Lmatch
+--Fonction qui récupère les deux var du (add x xs) de l'expression
+-- (match e (nil en) ((add x xs) ec)) et les mets dans un tableau
 matchVarHandler:: Sexp -> [Var]
 matchVarHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
