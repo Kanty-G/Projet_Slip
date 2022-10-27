@@ -19,9 +19,10 @@
 
 (let (((f x y) (* (+ x 1) y))) (f 5 6)) ; ↝ 36
 
-(let ((* +) (/ -)) (* 5 (/ 3 1)))       ; ↝ 7
+(let ((* +) (/ -)) (* 5 (/ 3 1)))       ; ↝ 7 l'ambiguité sur la déclaration des variables avec les opérations crée une ambiguité avec
+;les vraies opérations ceci ne nous donne donc pas le résultat attendu 
 
-(let ((y +) (x -)) (y 5 (x 3 1))) ;7
+(let ((y +) (x -)) (y 5 (x 3 1))) ;7  essaie du test précédent qui marche mais avec comme déclaration de variable autre chose que les opérations définies
 
 (*(+ (+ 9 2) (- 1 7)) 3) ;15 test sur l'appel de plusieurs fonctions
 
@@ -39,10 +40,10 @@
 (add nil 2) ; [[] . 2]
 (add(add (add 5 1) 6)7) ; [[[5 . 1] . 6] . 7]
 
-(list 1 nil) ; [1 []]
 (let ((y +) (x -)( z 9)) (y 5 (x z 1))) ; 13
 (let ((/ nil)) /) ; []
-(let ((/ 8) (x 3)) (* / x)) ; 24
+
+(let ((/ 8) (x 3)) (* / x)) ; 24 // sur une opération comme étant une déclaration de variable
 
 (match (add 7 2) (nil 0) ((add / -) (+ / -))) ; 9 les opértaions - + / * peuvent etre considéré comme des variables 
 
