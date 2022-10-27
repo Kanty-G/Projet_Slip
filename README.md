@@ -68,3 +68,8 @@ Concernant l’évaluation nous n’avions eu aucun problème.
 
 La surprise rencontré dans cette étape est l’appelle de fonction contenant nil mais avec l’expression du match décrite dans l’énoncé les doutes ont été balayer  .
 
+2)Appel de fonction et définition de fonction
+-----------------------------------------------
+
+Nous n’avions pas rencontré de problème particulier avec l’appel de fonction(Lcall) qui s’est fait rapidement grâce à la compréhension des précédentes démo faites en classe.
+Concernant la définition de fonctions (Lambda) le s2l et eval se sont aussi fait rapidement, le seul problème a été au niveau du l2d où les variables ne sont pas représentées par les chaînes de caractères mais plutôt par les indexes de  “de Bruijn” , afin de gérer cela nous avons dû créer une fonction indexOf qui nous permettrait de trouver l’index des ces variables dans l’environnement.
