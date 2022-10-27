@@ -72,7 +72,7 @@ En résumé ,on dirait que la méthode de compléter s2l, l2d et eval en largeur
       
      Et add ne peut prendre que deux arguments et donne une sortie différente.
     
-    (add x y) donne [x . y]\\Lexp :  Ladd (Ladd (Lref "x") (Lref "y")) (Lref "z")\\
+    (add(add 1 2) 3)) donne [[1 . 2] . 3] \\Lexp :Ladd (Ladd (Lnum 1) (Lnum 2)) (Lnum 3) \\
     
     Pour résoudre ce problème, on a créé une fonction auxiliaire\\
     s2l'' :: Sexp -> Lexp, qui va permettre de faire la récursion quand on a plusieurs arguments, et la récursion pour une liste construite avec "add", sera gérée dans s2l.
