@@ -41,7 +41,6 @@
 (add(add (add 5 1) 6)7) ; [[[5 . 1] . 6] . 7]
 
 (let ((y +) (x -)( z 9)) (y 5 (x z 1))) ; 13
-(let ((/ nil)) /) ; []
 
 (let ((/ 8) (x 3)) (* / x)) ; 24 // sur une opération comme étant une déclaration de variable
 
