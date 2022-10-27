@@ -1,0 +1,93 @@
+\documentclass{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsfonts}            %For \leadsto
+\usepackage{amsmath}             %For \text
+\usepackage{fancybox}            %For \ovalbox
+\usepackage{hyperref}
+
+\title{Travail pratique 1 IFT2035}
+\author{Kanty Louange Gakima, matricule : 20184109 \\ Marianne Shimt Pemmerl, matricule: }
+
+\begin{document}
+
+\maketitle
+
+\newcommand \mML {\ensuremath\mu\textsl{ML}}
+\newcommand \kw [1] {\textsf{#1}}
+\newcommand \id [1] {\textsl{#1}}
+\newcommand \punc [1] {\kw{`#1'}}
+\newcommand \str [1] {\texttt{"#1"}}
+\newenvironment{outitemize}{
+  \begin{itemize}
+  \let \origitem \item \def \item {\origitem[]\hspace{-18pt}}
+}{
+  \end{itemize}
+}
+\newcommand \Align [2][t] {
+  \begin{array}[#1]{@{}l}
+    #2
+  \end{array}}
+
+\section{Introduction}
+
+
+Comme indiqué dans l'énoncé du devoir. Ce travail vise à améliorer notre compréhension des langages fonctionnels en utilisant le langage Haskell pour compléter le code qui implémente un interprète d'un langage de programmation fonctionnel Slip.\\ 
+Dans ce rapport, on va parler principalement de la méthodologie utilisée pour comprendre l'énoncé et compléter le code. Mais aussi on va parler des problèmes rencontrées et les différentes manières qu'on a utilisé pour les résoudre.
+
+\section{Méthode utilisée}
+D'une manière générale on a travaillé en binôme pour faire tout le travail tel que conseillé, que ce soit pour la compréhension et pour compléter le code. Mais exceptionnelement quand on rencontrait un problème qui nous empêche d'avancer, chacune allait réfléchir de son côté et on mettait nos idées ensemble pour résoudre le problème et continuer.\\
+
+Après avoir lu et relu le pdf de l'énoncé, on a ciblé les points importants qui vont nous aider à faire le travail.
+À savoir la compréhension de la syntaxe de Slip, la syntaxe et sémantique des expressions lors de l’analyse des représentations internes Lexp et Dexp et enfin comment se fait l'évaluation des expressions. 
+
+Et pour y arriver, on a opté pour une compréhension progressive des constructeurs de la représentation intermédiaire Lexp.\\
+
+Et pour faciliter notre compréhension, on s’est servi des exemples du document exemples.slip, en regardant pour chaque exemple l'expression Sexp correspondante pour  pouvoir implémenter ses représentations internes Lexp et Dexp  et l’évaluer .
+
+En résumé ,on dirait que la méthode de compléter s2l, l2d et eval en largeur a été plus ou moins efficace malgré les différents problèmes qu’on a rencontrés cités ci- dessous.
+
+
+\newpage
+\section{Problèmes et surprises rencontrés}
+
+\begin{enumerate}
+    \item 
+    \textbf{Construction de listes:}\\
+    Dans le langage fonctionnel slip les listes sont construits avec le mot clé add ou list ou encore nil pour les listes vides.\\
+    Ici, au début on croyait que la syntaxe d'une liste est la même, qu'elle soit construite avec "add" ou "list". C'est après avoir testé d'autres exemples et relu encore une fois notre ami l'énoncé , qu'on a compris qu'il y avait un problème.\\
+    Exemples:\\
+      
+      (list 1 2 3) donne  [1 2. 3]\\
+      Avec comme expression Scons (Ssym "list") (Scons (Snum 1) (Scons (Snum 2) (Scons (Snum 3) Snil)))\\
+      
+      Ceci laisserai croire que l'expression Lexp est:\\ Ladd (Lnum 1) (Ladd (Lnum 2) (Ladd (Lnum 3) (Lnil)))\\
+      
+      Et après l'évaluation on aura: [1 2 3], ce qui n'est donc pas correct\\
+      
+     Après avoir lu, l'énoncé on a dû considérer que ce serait plutôt:\\
+      Ladd (Lnum 1) (Ladd (Lnum 2 Ladd (Lnum 3))), pour respecter cette équivalence : [v1 v2] <=>  [v1 . [v2 . []]]\\
+      
+     Et add ne peut prendre que deux arguments et donne une sortie différente.
+    
+    (add x y) donne [x . y]\\Lexp :  Ladd (Ladd (Lref "x") (Lref "y")) (Lref "z")\\
+    
+    Pour résoudre ce problème, on a créé une fonction auxiliaire\\
+    s2l'' :: Sexp -> Lexp, qui va permettre de faire la récursion quand on a plusieurs arguments, et la récursion pour une liste construite avec "add", sera gérée dans s2l.
+    
+    Lors de la fonction l2d et eval,les deux peuvent être gérés de la même manière sans devoir distinguer les deux cas.
+    
+\end{enumerate}
+
+\begin{enumerate}
+    \item 
+    \textbf{Problèmes avec match}\\
+
+\end{enumerate}
+
+
+
+
+\end{document}
