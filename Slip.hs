@@ -251,6 +251,7 @@ matchLexpHandler:: Sexp -> Lexp
 matchLexpHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
                 (Scons (Ssym "nil") _,y) -> matchLexpHandler y
+                (Scons (Ssym "add") _,y) -> matchLexpHandler y
                 (Scons _ y, _) -> s2l y
 
 --Fonction qui gère les var du Lmatch
@@ -258,7 +259,8 @@ matchVarHandler:: Sexp -> [Var]
 matchVarHandler (Scons sexp1 sexp2) =
             case (sexp1,sexp2) of
                 (Scons (Ssym "nil") _,y) -> matchVarHandler y
-                (Scons (Scons (Ssym"add") (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
+                (Scons (Ssym "add") _,y) -> matchVarHandler y
+                (Scons (Scons (Ssym "add") (Scons (Ssym m) (Scons (Ssym n) _))) _, _) -> [m,n]
 
 ---------------------------------------------------------------------------
 -- Représentation du contexte d'exécution                                --
@@ -419,4 +421,4 @@ valOf = evalSexp . sexpOf
 
 main :: IO ()
 
-main = print(valOf "(match nil (nil 1) ((add x y) (+ x y)))")
+main = print(valOf "(match (add 1 2) (nil 1) ((add x y) (+ x y)))")
